@@ -10,10 +10,9 @@ BASE_URL = "https://api.vercel.com"
 VERCEL_TOKEN = "EHrL5NzXYnGSA6xmIJqV2E7b"
 LOG_DIRECTORY = r"C:\Users\ARYAVIN\Documents\REPO\STARTUP\WEB\log"
 LOG_FILENAME = "vercel_5.log"
-REPO_ID = 948498869
+REPO_ID = 956115640
 BRANCH = 'main'
-PROJECT_NAME = 'startup'  # ✅ Correct name from your Vercel dashboard
-
+PROJECT_NAME = 'startup'  # 
 # ----------------------------------------------------------------------------
 # LOGGING SETUP
 # ----------------------------------------------------------------------------

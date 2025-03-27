@@ -1,7 +1,0 @@
-2025-03-25 03:21:27,020 - DEBUG - Logging setup completed.
-2025-03-25 03:21:27,021 - INFO - Script started.
-2025-03-25 03:21:27,021 - DEBUG - Connecting to Neon PostgreSQL...
-2025-03-25 03:21:28,855 - INFO - --- User Details ---
-2025-03-25 03:21:28,856 - INFO - ID: 1, Name: VINAY KUMAR ARYA, Email: vny.aryanee@gmail.com, Age: 32, Location: None, Interests: d
-2025-03-25 03:21:28,856 - INFO - ID: 2, Name: VINAY KUMAR ARYA, Email: vny.QQaryan@gmail.com, Age: 32, Location: None, Interests: a
-2025-03-25 03:21:29,066 - INFO - Script completed.

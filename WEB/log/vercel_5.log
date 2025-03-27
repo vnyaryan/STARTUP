@@ -1,4 +1,0 @@
-2025-03-26 01:41:32,270 - DEBUG - Logging setup completed.
-2025-03-26 01:41:32,276 - DEBUG - Starting new HTTPS connection (1): api.vercel.com:443
-2025-03-26 01:41:34,709 - DEBUG - https://api.vercel.com:443 "POST /v13/deployments HTTP/1.1" 200 None
-2025-03-26 01:41:34,713 - INFO - Deployment started! URL: https://startup-n0dt46b1f-vnyaryan-gmailcoms-projects.vercel.app

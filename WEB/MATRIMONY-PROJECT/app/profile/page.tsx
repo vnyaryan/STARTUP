@@ -1,42 +1,40 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../lib/authOptions"; 
-import { redirect } from "next/navigation";
-import { neon } from "@neondatabase/serverless";
+"use client";
 
-// Neon DB connection
-const sql = neon(process.env.DATABASE_URL!);
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { Button } from "@mui/material";
 
-export default async function ProfilePage() {
-  const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
+export default function ProfilePage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
-  // Fetch user profile from Neon using session email
-  const result = await sql`
-    SELECT name, email, age, location, interests
-    FROM users
-    WHERE email = ${session.user?.email}
-    LIMIT 1;
-  `;
-  const profile = result[0];
+  if (status === "loading") {
+    return <p style={{ padding: "2rem", color: "white" }}>Loading...</p>;
+  }
 
-  if (!profile?.email) {
-    return (
-      <div className="p-4">
-        <h1 className="text-xl font-semibold">Profile not found.</h1>
-      </div>
-    );
+  if (!session) {
+    router.push("/login");
+    return null;
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Your Profile</h1>
-      <div className="space-y-2">
-        <p><strong>Name:</strong> {profile.name}</p>
-        <p><strong>Email:</strong> {profile.email}</p>
-        <p><strong>Age:</strong> {profile.age}</p>
-        <p><strong>Location:</strong> {profile.location}</p>
-        <p><strong>Interests:</strong> {profile.interests}</p>
-      </div>
+    <div style={{ padding: "2rem", color: "white" }}>
+      <h1 style={{ fontSize: "2rem", fontWeight: "bold", marginBottom: "1rem" }}>Your Profile</h1>
+
+      <p><strong>Name:</strong> {session.user?.name || "N/A"}</p>
+      <p><strong>Email:</strong> {session.user?.email || "N/A"}</p>
+      <p><strong>Age:</strong> 32</p>
+      <p><strong>Location:</strong> </p>
+      <p><strong>Interests:</strong> </p>
+
+      <Button
+        variant="contained"
+        color="error"
+        onClick={() => signOut({ callbackUrl: "/" })}
+        sx={{ marginTop: "2rem" }}
+      >
+        Logout
+      </Button>
     </div>
   );
 }
