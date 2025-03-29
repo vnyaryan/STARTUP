@@ -1,4 +1,3 @@
-
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -28,6 +27,7 @@ export default function ProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ filename: file.name, contentType: file.type }),
       });
+
       const { uploadUrl, blobUrl } = await res.json();
 
       await fetch(uploadUrl, {
@@ -48,6 +48,11 @@ export default function ProfilePage() {
     } finally {
       setUploading(false);
     }
+  }
+
+  function handleLogout() {
+    // Simple logout logic — redirect to login page
+    window.location.href = "/login";
   }
 
   return (
@@ -79,7 +84,12 @@ export default function ProfilePage() {
         <p><strong>Interests:</strong></p>
       </div>
 
-      <button className="mt-6 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md">Logout</button>
+      <button
+        onClick={handleLogout}
+        className="mt-6 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md"
+      >
+        Logout
+      </button>
     </div>
   );
 }
