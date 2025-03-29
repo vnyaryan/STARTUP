@@ -1,40 +1,85 @@
-"use client";
 
-import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { Button } from "@mui/material";
+"use client";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-  if (status === "loading") {
-    return <p style={{ padding: "2rem", color: "white" }}>Loading...</p>;
-  }
+  useEffect(() => {
+    async function fetchProfileImage() {
+      const res = await fetch("/api/get-profile-image");
+      const data = await res.json();
+      if (data.profilePicUrl) setProfilePicUrl(data.profilePicUrl);
+    }
+    fetchProfileImage();
+  }, []);
 
-  if (!session) {
-    router.push("/login");
-    return null;
+  async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+
+    try {
+      const res = await fetch("/api/get-upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, contentType: file.type }),
+      });
+      const { uploadUrl, blobUrl } = await res.json();
+
+      await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      await fetch("/api/save-profile-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profilePicUrl: blobUrl }),
+      });
+
+      setProfilePicUrl(blobUrl);
+    } catch (err) {
+      console.error("Upload failed", err);
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
-    <div style={{ padding: "2rem", color: "white" }}>
-      <h1 style={{ fontSize: "2rem", fontWeight: "bold", marginBottom: "1rem" }}>Your Profile</h1>
+    <div className="text-white p-8 min-h-screen bg-black">
+      <h1 className="text-4xl font-bold mb-6">Your Profile</h1>
 
-      <p><strong>Name:</strong> {session.user?.name || "N/A"}</p>
-      <p><strong>Email:</strong> {session.user?.email || "N/A"}</p>
-      <p><strong>Age:</strong> 32</p>
-      <p><strong>Location:</strong> </p>
-      <p><strong>Interests:</strong> </p>
+      {profilePicUrl && (
+        <Image
+          src={profilePicUrl}
+          alt="Profile"
+          width={150}
+          height={150}
+          className="rounded-full border-4 border-white mb-4"
+        />
+      )}
 
-      <Button
-        variant="contained"
-        color="error"
-        onClick={() => signOut({ callbackUrl: "/" })}
-        sx={{ marginTop: "2rem" }}
-      >
-        Logout
-      </Button>
+      <label className="cursor-pointer bg-yellow-600 px-4 py-2 rounded-md hover:bg-yellow-700 text-white inline-block mb-6">
+        Upload Profile Image
+        <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
+      </label>
+
+      {uploading && <p className="text-sm text-gray-400 mt-2">Uploading...</p>}
+
+      <div className="space-y-2">
+        <p><strong>Name:</strong> VINAY KUMAR ARYA</p>
+        <p><strong>Email:</strong> vny.aryan@gmail.com</p>
+        <p><strong>Age:</strong> 32</p>
+        <p><strong>Location:</strong></p>
+        <p><strong>Interests:</strong></p>
+      </div>
+
+      <button className="mt-6 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md">Logout</button>
     </div>
   );
 }
