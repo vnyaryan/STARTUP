@@ -1,15 +1,18 @@
-import { put } from "@vercel/blob";
+import { generateUploadUrl } from "@vercel/blob";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   const { filename, contentType } = await request.json();
 
-  const blob = await put(`profile-pictures/${filename}`, request.body, {
-    access: "public",
-    contentType,
-  });
+  // 1. Generate a secure presigned upload URL
+  const { url, token } = await generateUploadUrl();
 
+  // 2. Construct the full upload URL with parameters
+  const uploadUrl = `${url}?token=${token}&filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`;
+
+  // 3. Return uploadUrl (to PUT the file) and blobUrl (to view it after upload)
   return NextResponse.json({
-    blobUrl: blob.url,
+    uploadUrl,
+    blobUrl: url,
   });
 }
