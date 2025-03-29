@@ -1,5 +1,7 @@
+
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function ProfileForm() {
   const [profile, setProfile] = useState({
@@ -9,14 +11,16 @@ export default function ProfileForm() {
     bio: "",
     interests: [],
     profilePicture: null,
+    profilePictureUrl: "",
   });
+  const [uploading, setUploading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setProfile({ ...profile, [name]: value });
   };
 
-  const handleInterestsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInterestsChange = (e) => {
     const { value, checked } = e.target;
     setProfile((prevState) => ({
       ...prevState,
@@ -26,123 +30,63 @@ export default function ProfileForm() {
     }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setProfile({ ...profile, profilePicture: e.target.files[0] });
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+
+    try {
+      const res = await fetch("/api/get-upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, contentType: file.type }),
+      });
+      const { uploadUrl, blobUrl } = await res.json();
+
+      await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      setProfile((prev) => ({ ...prev, profilePicture: file, profilePictureUrl: blobUrl }));
+    } catch (error) {
+      console.error("Image upload failed:", error);
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Profile Data:", profile);
-    alert("Profile saved successfully!");
+    console.log("Submitted profile:", profile);
+    // Submit logic here (API call)
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Full Name */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-600">Full Name</label>
-        <input
-          type="text"
-          name="name"
-          value={profile.name}
-          onChange={handleChange}
-          className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter your name"
-          required
-        />
-      </div>
+      <input type="text" name="name" value={profile.name} onChange={handleChange} placeholder="Name" className="border p-2 w-full" />
+      <input type="number" name="age" value={profile.age} onChange={handleChange} placeholder="Age" className="border p-2 w-full" />
+      <select name="gender" value={profile.gender} onChange={handleChange} className="border p-2 w-full">
+        <option value="">Select Gender</option>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
+      <textarea name="bio" value={profile.bio} onChange={handleChange} placeholder="Bio" className="border p-2 w-full" />
 
-      {/* Age */}
       <div>
-        <label className="block text-sm font-semibold text-gray-600">Age</label>
-        <input
-          type="number"
-          name="age"
-          value={profile.age}
-          onChange={handleChange}
-          className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter your age"
-          required
-        />
-      </div>
-
-      {/* Gender */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-600">Gender</label>
-        <select
-          name="gender"
-          value={profile.gender}
-          onChange={handleChange}
-          className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        >
-          <option value="">Select Gender</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-
-      {/* Bio */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-600">Bio</label>
-        <textarea
-          name="bio"
-          value={profile.bio}
-          onChange={handleChange}
-          className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Write about yourself"
-          rows={3}
-        ></textarea>
-      </div>
-
-      {/* Interests */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-600">Interests</label>
-        <div className="grid grid-cols-2 gap-2">
-          {["Reading", "Traveling", "Cooking", "Sports", "Music", "Gaming"].map((interest) => (
-            <label key={interest} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                value={interest}
-                checked={profile.interests.includes(interest)}
-                onChange={handleInterestsChange}
-                className="form-checkbox text-blue-500"
-              />
-              <span>{interest}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Profile Picture */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-600">Profile Picture</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {profile.profilePicture && (
-          <div className="mt-2">
-            <img
-              src={URL.createObjectURL(profile.profilePicture)}
-              alt="Profile Preview"
-              className="w-24 h-24 rounded-full object-cover border-2 border-blue-500"
-            />
+        <label className="block mb-1 font-medium">Upload Profile Picture:</label>
+        <input type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} />
+        {uploading && <p className="text-sm text-gray-500">Uploading...</p>}
+        {profile.profilePictureUrl && (
+          <div className="mt-4">
+            <Image src={profile.profilePictureUrl} alt="Profile" width={200} height={200} className="rounded-md" />
           </div>
         )}
       </div>
 
-      {/* Save Button */}
-      <button
-        type="submit"
-        className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-700"
-      >
-        Save Profile
+      <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Submit
       </button>
     </form>
   );
