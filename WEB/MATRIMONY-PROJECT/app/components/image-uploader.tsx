@@ -26,12 +26,12 @@ export function ImageUploader({ onUploadComplete }: { onUploadComplete?: (url: s
         body: formData,
       })
 
-      const result = await response.json()
-
       if (!response.ok) {
-        throw new Error(result.error || "Failed to upload image")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to upload image")
       }
 
+      const result = await response.json()
       setImageUrl(result.url)
 
       if (onUploadComplete) {
