@@ -1,13 +1,13 @@
+// save-profile-image/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { neon } from "@neondatabase/serverless";
 
-// Placeholder for database or external storage.
-let savedProfilePicUrl: string | null = null;
+const sql = neon(process.env.DATABASE_URL!);
 
 export async function POST(req: NextRequest) {
   try {
-    const { profilePicUrl } = await req.json();
+    const { userId, profilePicUrl } = await req.json();
 
-    // Validate the incoming profilePicUrl
     if (!profilePicUrl || typeof profilePicUrl !== "string") {
       return NextResponse.json(
         { success: false, message: "Invalid or missing profilePicUrl." },
@@ -15,8 +15,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Save profile picture URL (this is a placeholder, replace with DB/storage logic)
-    savedProfilePicUrl = profilePicUrl;
+    await sql`
+      UPDATE users SET profile_pic_url = ${profilePicUrl}
+      WHERE id = ${userId};
+    `;
 
     return NextResponse.json({ success: true });
   } catch (error) {

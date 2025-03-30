@@ -1,8 +1,12 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 
 export default function ProfileForm() {
+  const { data: session } = useSession();
+  const userId = (session?.user as any)?.id; // Retrieve userId from session
+
   const [profile, setProfile] = useState({
     name: "",
     age: "",
@@ -54,10 +58,11 @@ export default function ProfileForm() {
 
       if (!uploadRes.ok) throw new Error("Failed to upload image");
 
+      // Save profile image URL along with userId to Neon DB
       await fetch("/api/save-profile-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profilePicUrl: blobUrl }),
+        body: JSON.stringify({ userId, profilePicUrl: blobUrl }),
       });
 
       setProfile((prev) => ({ ...prev, profilePicture: file, profilePictureUrl: blobUrl }));
