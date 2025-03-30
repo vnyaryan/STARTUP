@@ -1,115 +1,109 @@
 "use client";
-import { Container, TextField, Button, Typography, Box } from "@mui/material";
 import { useState } from "react";
+import Image from "next/image";
+import { useSession } from "next-auth/react";
 
-export default function SignupPage() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    name: "",         // Changed from fullName to name
+export default function ProfileForm() {
+  const { data: session } = useSession();
+  const userId = (session?.user as any)?.id; // Retrieve userId from session
+
+  const [profile, setProfile] = useState({
+    name: "",
     age: "",
-    interests: ""     // Changed from bio to interests
+    gender: "",
+    bio: "",
+    interests: [],
+    profilePicture: null,
+    profilePictureUrl: "",
   });
 
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage("");
-    setError("");
-    setIsSubmitting(true);
+  const handleInterestsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value, checked } = e.target;
+    setProfile((prevState) => ({
+      ...prevState,
+      interests: checked
+        ? [...prevState.interests, value]
+        : prevState.interests.filter((interest) => interest !== value),
+    }));
+  };
 
-    if (!formData.name || !formData.email || !formData.password) {
-      setError("Name, email, and password are required");
-      setIsSubmitting(false);
-      return;
-    }
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
 
     try {
-      const res = await fetch("/api/signup", {
+      const res = await fetch("/api/get-upload-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ filename: file.name, contentType: file.type }),
       });
 
-      const data = await res.json();
+      if (!res.ok) throw new Error("Failed to get upload URL");
 
-      if (res.status === 400 || res.status === 409 || res.status >= 500) {
-        setError(data.error || "Signup failed.");
-      } else if (res.status === 201) {
-        setMessage(data.message);
-        setFormData({ email: "", password: "", name: "", age: "", interests: "" });
-      }
-    } catch {
-      setError("Network error. Please try again.");
+      const { uploadUrl, blobUrl } = await res.json();
+
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      if (!uploadRes.ok) throw new Error("Failed to upload image");
+
+      // Save profile image URL along with userId to Neon DB
+      await fetch("/api/save-profile-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, profilePicUrl: blobUrl }),
+      });
+
+      setProfile((prev) => ({ ...prev, profilePicture: file, profilePictureUrl: blobUrl }));
+    } catch (error) {
+      console.error("Image upload error:", error);
     } finally {
-      setIsSubmitting(false);
+      setUploading(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log("Submitted profile:", profile);
+    // Submit logic (API call) here
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 5 }}>
-      <Typography variant="h4" align="center" gutterBottom>
-        Create an Account
-      </Typography>
-      <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <TextField
-          label="Full Name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-        />
-        <TextField
-          label="Email"
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <TextField
-          label="Password"
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-        <TextField
-          label="Age"
-          name="age"
-          value={formData.age}
-          onChange={handleChange}
-        />
-        <TextField
-          label="Bio"
-          name="interests"
-          multiline
-          rows={4}
-          value={formData.interests}
-          onChange={handleChange}
-        />
-        <Button type="submit" variant="contained" color="warning" disabled={isSubmitting}>
-          Register
-        </Button>
-      </Box>
-      {message && (
-        <Typography color="success.main" align="center" sx={{ mt: 2 }}>
-          {message}
-        </Typography>
-      )}
-      {error && (
-        <Typography color="error" align="center" sx={{ mt: 2 }}>
-          {error}
-        </Typography>
-      )}
-    </Container>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <input type="text" name="name" value={profile.name} onChange={handleChange} placeholder="Name" className="border p-2 w-full" />
+      <input type="number" name="age" value={profile.age} onChange={handleChange} placeholder="Age" className="border p-2 w-full" />
+      <select name="gender" value={profile.gender} onChange={handleChange} className="border p-2 w-full">
+        <option value="">Select Gender</option>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
+      <textarea name="bio" value={profile.bio} onChange={handleChange} placeholder="Bio" className="border p-2 w-full" />
+
+      <div>
+        <label className="block mb-1 font-medium">Upload Profile Picture:</label>
+        <input type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} />
+        {uploading && <p className="text-sm text-gray-500">Uploading...</p>}
+        {profile.profilePictureUrl && (
+          <div className="mt-4">
+            <Image src={profile.profilePictureUrl} alt="Profile" width={200} height={200} className="rounded-md" />
+          </div>
+        )}
+      </div>
+
+      <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Submit
+      </button>
+    </form>
   );
 }
