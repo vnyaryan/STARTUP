@@ -1,13 +1,20 @@
+// app/api/get-upload-url/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { put } from '@vercel/blob';
+import { put } from "@vercel/blob";
 
 export async function POST(request: NextRequest) {
-  const { filename, contentType } = await request.json();
+  try {
+    const { filename, contentType } = await request.json();
 
-  const blob = await put(filename, null, { access: 'public', contentType });
+    // Correct usage of Vercel Blob's put function
+    const blob = await put(filename, null, { access: 'public', contentType });
 
-  return NextResponse.json({
-    uploadUrl: blob.url,  // Client uploads directly via PUT to this URL
-    blobUrl: blob.url,    // Publicly accessible URL to render image
-  });
+    return NextResponse.json({
+      uploadUrl: blob.url,  // Direct PUT upload URL
+      blobUrl: blob.url,    // URL for accessing the uploaded file
+    });
+  } catch (error: any) {
+    console.error("Error generating upload URL:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
