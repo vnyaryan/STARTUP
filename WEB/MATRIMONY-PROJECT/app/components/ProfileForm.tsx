@@ -40,23 +40,21 @@ export default function ProfileForm() {
     setUploading(true);
 
     try {
-      const res = await fetch("/api/get-upload-url", {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("filename", file.name);
+      formData.append("contentType", file.type);
+
+      const response = await fetch("/api/upload-image", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: file.name, contentType: file.type }),
+        body: formData,
       });
 
-      if (!res.ok) throw new Error("Failed to get upload URL");
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
+      }
 
-      const { uploadUrl, blobUrl } = await res.json();
-
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
-      });
-
-      if (!uploadRes.ok) throw new Error("Failed to upload image");
+      const { blobUrl } = await response.json();
 
       // Save profile image URL along with userId to Neon DB
       await fetch("/api/save-profile-image", {
