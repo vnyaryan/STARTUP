@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateUploadUrl } from "@vercel/blob/client";
+import { put } from "@vercel/blob";
 
 export async function POST(request: NextRequest) {
   try {
     const { filename, contentType } = await request.json();
 
-    // Correct method: generate a presigned upload URL
-    const uploadData = await generateUploadUrl(filename, {
+    // Correct and updated usage
+    const blob = await put(filename, null, {
       access: 'public',
       contentType,
+      token: process.env.BLOB_READ_WRITE_TOKEN,
     });
 
     return NextResponse.json({
-      uploadUrl: uploadData.url,   // URL for client-side PUT request
-      blobUrl: uploadData.url,     // URL to view the file afterward
+      uploadUrl: blob.url,
+      blobUrl: blob.url,
     });
   } catch (error: any) {
     console.error("Detailed Vercel Blob Error:", error.message, error);
