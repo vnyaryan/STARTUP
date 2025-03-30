@@ -5,12 +5,12 @@ export async function POST(request: NextRequest) {
   try {
     const { filename, contentType } = await request.json();
 
-    // Correct: Use { token: true } to generate a client-side upload URL
-    const blob = await put(filename, { access: 'public', contentType, token: true });
+    // Corrected usage clearly shown
+    const blob = await put(filename, null, { access: 'public', contentType, token: true });
 
     return NextResponse.json({
-      uploadUrl: blob.url, // use this URL on client side to PUT the file
-      blobUrl: blob.url,   // same URL to access uploaded file
+      uploadUrl: blob.url, // URL for frontend to upload the file directly
+      blobUrl: blob.url,   // URL to view the file after upload
     });
   } catch (error: any) {
     console.error("Detailed Vercel Blob Error:", error.message, error);
