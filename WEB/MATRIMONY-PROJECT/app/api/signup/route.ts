@@ -11,15 +11,23 @@ export async function POST(req: Request) {
   try {
     const { name, email, password, age, location, interests, profilePicUrl } = await req.json();
 
+    if (!name || !email || !password) {
+      return NextResponse.json(
+        { error: "Name, email, and password are required." },
+        { status: 400 }
+      );
+    }
+
     // ✅ Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // ✅ Insert user into DB
     const result = await sql`
       INSERT INTO users (name, email, password, age, location, interests, profile_pic_url)
-      VALUES (${name}, ${email}, ${hashedPassword}, ${age}, ${location}, ${interests}, ${profilePicUrl || null})
+      VALUES (${name}, ${email}, ${hashedPassword}, ${age || null}, ${location || null}, ${interests || null}, ${profilePicUrl || null})
       RETURNING id;
     `;
+
     const userId = result[0].id;
 
     // ✅ Generate verification token
@@ -31,8 +39,9 @@ export async function POST(req: Request) {
       VALUES (${userId}, ${token}, ${expires});
     `;
 
-    // ✅ Send verification email using Resend's test sender
+    // ✅ Send verification email
     const verifyLink = `https://startup-ruddy-eight.vercel.app/api/verify-email?token=${token}`;
+
     await resend.emails.send({
       from: "onboarding@resend.dev", // ✅ TEMPORARY TEST SENDER
       to: email,
