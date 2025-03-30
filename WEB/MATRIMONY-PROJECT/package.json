@@ -60,7 +60,10 @@
     "zod": "^3.24.1",
     "fs": "latest",
     "path": "latest",
-    "uuid": "latest"
+    "uuid": "latest",
+    "@mui/material": "^5.15.11",
+    "@mui/icons-material": "^5.15.11",
+    "next-auth": "^4.24.6"
   },
   "devDependencies": {
     "@types/node": "^22",
