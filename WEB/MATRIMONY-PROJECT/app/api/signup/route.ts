@@ -10,13 +10,14 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function POST(req: Request) {
   try {
     const { name, email, password, age, location, interests, profilePicUrl } = await req.json();
+
     // ✅ Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // ✅ Insert user into DB
     const result = await sql`
       INSERT INTO users (name, email, password, age, location, interests, profile_pic_url)
-      VALUES (${name}, ${email}, ${hashedPassword}, ${age}, ${location}, ${interests},, ${profilePicUrl})
+      VALUES (${name}, ${email}, ${hashedPassword}, ${age}, ${location}, ${interests}, ${profilePicUrl || null})
       RETURNING id;
     `;
     const userId = result[0].id;
