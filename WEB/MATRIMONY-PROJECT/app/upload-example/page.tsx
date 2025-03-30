@@ -1,4 +1,4 @@
-import { ImageUploader } from "@/components/image-uploader"
+import { ImageUploader } from "@/app/components/image-uploader"
 
 export default function UploadPage() {
   return (

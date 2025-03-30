@@ -1,35 +1,76 @@
-import { put } from "@vercel/blob"
-import { NextResponse } from "next/server"
+"use client"
 
-export async function POST(request: Request) {
-  try {
-    const formData = await request.formData()
-    const file = formData.get("file") as File
+import type React from "react"
 
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 })
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+
+export function ImageUploader({ onUploadComplete }: { onUploadComplete?: (url: string) => void }) {
+  const [isUploading, setIsUploading] = useState(false)
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    setError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch("/api/upload-image", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to upload image")
+      }
+
+      const result = await response.json()
+      setImageUrl(result.url)
+
+      if (onUploadComplete) {
+        onUploadComplete(result.url)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload image")
+      console.error("Upload error:", err)
+    } finally {
+      setIsUploading(false)
     }
-
-    // Generate a unique filename with original extension
-    const originalName = file.name
-    const extension = originalName.split(".").pop() || "jpg"
-    const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${extension}`
-
-    // Upload to Vercel Blob
-    const blob = await put(uniqueFilename, file, {
-      access: "public",
-    })
-
-    return NextResponse.json({
-      success: true,
-      url: blob.url,
-      filename: blob.pathname,
-    })
-  } catch (error) {
-    console.error("Error uploading file:", error)
-    return NextResponse.json({ error: "Error uploading file", details: (error as Error).message }, { status: 500 })
   }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        <Button
+          onClick={() => document.getElementById("file-upload")?.click()}
+          disabled={isUploading}
+          variant="outline"
+        >
+          {isUploading ? "Uploading..." : "Upload Image"}
+        </Button>
+        <input id="file-upload" type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+      </div>
+
+      {error && <p className="text-red-500">{error}</p>}
+
+      {imageUrl && (
+        <div className="mt-4">
+          <p className="text-sm text-muted-foreground mb-2">Uploaded image:</p>
+          <img src={imageUrl || "/placeholder.svg"} alt="Uploaded" className="max-w-full h-auto max-h-64 rounded-md" />
+        </div>
+      )}
+    </div>
+  )
 }
+
+
 
 
 
