@@ -1,32 +1,20 @@
-'use client';
+import type { Metadata } from 'next'
+import './globals.css'
 
-import { ThemeProvider, CssBaseline, AppBar, Toolbar, Typography, Button } from '@mui/material';
-import { SessionProvider } from 'next-auth/react';
-import theme from './theme';
-import Link from 'next/link';
+export const metadata: Metadata = {
+  title: 'v0 App',
+  description: 'Created with v0',
+  generator: 'v0.dev',
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
   return (
     <html lang="en">
-      <body>
-        <SessionProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <AppBar position="static" sx={{ background: 'linear-gradient(to right, #FFD700, #8B0000)' }}>
-              <Toolbar>
-                <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-                  Matrimony Elite
-                </Typography>
-                <Button color="inherit" component={Link} href="/">Home</Button>
-                <Button color="inherit" component={Link} href="/about">About Us</Button>
-                <Button color="inherit" component={Link} href="/contact">Contact Us</Button>
-                <Button color="inherit" component={Link} href="/profile">Profile</Button>
-              </Toolbar>
-            </AppBar>
-            {children}
-          </ThemeProvider>
-        </SessionProvider>
-      </body>
+      <body>{children}</body>
     </html>
-  );
+  )
 }
