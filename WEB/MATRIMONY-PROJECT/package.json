@@ -63,7 +63,12 @@
     "uuid": "latest",
     "@mui/material": "^5.15.11",
     "@mui/icons-material": "^5.15.11",
-    "next-auth": "^4.24.6"
+    "next-auth": "^4.24.6",
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "@neondatabase/serverless": "^0.9.0",
+    "bcryptjs": "^2.4.3"
+    
   },
   "devDependencies": {
     "@types/node": "^22",
