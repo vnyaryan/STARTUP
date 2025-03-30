@@ -15,6 +15,11 @@ export default function ProfilePage() {
         if (!response.ok) throw new Error("Failed to fetch profile image URL");
 
         const { profilePicUrl } = await response.json();
+
+        if (typeof profilePicUrl !== "string" || !profilePicUrl) {
+          throw new Error("Invalid profile image URL received");
+        }
+
         setProfileImageUrl(profilePicUrl);
       } catch (err: any) {
         console.error("Error fetching profile image:", err);
@@ -41,7 +46,7 @@ export default function ProfilePage() {
           alt="Profile Image"
           width={300}
           height={300}
-          className="rounded-md"
+          className="rounded-md object-cover"
         />
       ) : (
         <div className="text-gray-500 font-medium">No profile image available.</div>
