@@ -1,95 +1,51 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 
 export default function ProfilePage() {
-  const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [profileImageUrl, setProfileImageUrl] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchProfileImage() {
-      const res = await fetch("/api/get-profile-image");
-      const data = await res.json();
-      if (data.profilePicUrl) setProfilePicUrl(data.profilePicUrl);
+      try {
+        const response = await fetch("/api/get-profile-image");
+
+        if (!response.ok) throw new Error("Failed to fetch profile image URL");
+
+        const { profilePicUrl } = await response.json();
+        setProfileImageUrl(profilePicUrl);
+      } catch (err: any) {
+        console.error("Error fetching profile image:", err);
+        setError(err.message || "An unexpected error occurred");
+      } finally {
+        setLoading(false);
+      }
     }
+
     fetchProfileImage();
   }, []);
 
-  async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  if (loading)
+    return <div className="text-gray-600 font-medium">Loading profile image...</div>;
 
-    setUploading(true);
-
-    try {
-      const res = await fetch("/api/get-upload-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: file.name, contentType: file.type }),
-      });
-
-      const { uploadUrl, blobUrl } = await res.json();
-
-      await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
-      });
-
-      await fetch("/api/save-profile-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profilePicUrl: blobUrl }),
-      });
-
-      setProfilePicUrl(blobUrl);
-    } catch (err) {
-      console.error("Upload failed", err);
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  function handleLogout() {
-    // Simple logout logic — redirect to login page
-    window.location.href = "/login";
-  }
+  if (error)
+    return <div className="text-red-500 font-medium">Error: {error}</div>;
 
   return (
-    <div className="text-white p-8 min-h-screen bg-black">
-      <h1 className="text-4xl font-bold mb-6">Your Profile</h1>
-
-      {profilePicUrl && (
+    <div>
+      {profileImageUrl ? (
         <Image
-          src={profilePicUrl}
-          alt="Profile"
-          width={150}
-          height={150}
-          className="rounded-full border-4 border-white mb-4"
+          src={profileImageUrl}
+          alt="Profile Image"
+          width={300}
+          height={300}
+          className="rounded-md"
         />
+      ) : (
+        <div className="text-gray-500 font-medium">No profile image available.</div>
       )}
-
-      <label className="cursor-pointer bg-yellow-600 px-4 py-2 rounded-md hover:bg-yellow-700 text-white inline-block mb-6">
-        Upload Profile Image
-        <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
-      </label>
-
-      {uploading && <p className="text-sm text-gray-400 mt-2">Uploading...</p>}
-
-      <div className="space-y-2">
-        <p><strong>Name:</strong> VINAY KUMAR ARYA</p>
-        <p><strong>Email:</strong> vny.aryan@gmail.com</p>
-        <p><strong>Age:</strong> 32</p>
-        <p><strong>Location:</strong></p>
-        <p><strong>Interests:</strong></p>
-      </div>
-
-      <button
-        onClick={handleLogout}
-        className="mt-6 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md"
-      >
-        Logout
-      </button>
     </div>
   );
 }

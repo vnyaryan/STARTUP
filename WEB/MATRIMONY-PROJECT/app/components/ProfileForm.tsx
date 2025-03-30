@@ -1,4 +1,3 @@
-
 "use client";
 import { useState } from "react";
 import Image from "next/image";
@@ -13,14 +12,15 @@ export default function ProfileForm() {
     profilePicture: null,
     profilePictureUrl: "",
   });
+
   const [uploading, setUploading] = useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setProfile({ ...profile, [name]: value });
+    setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleInterestsChange = (e) => {
+  const handleInterestsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
     setProfile((prevState) => ({
       ...prevState,
@@ -30,7 +30,7 @@ export default function ProfileForm() {
     }));
   };
 
-  const handleFileChange = async (e) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
@@ -41,26 +41,37 @@ export default function ProfileForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ filename: file.name, contentType: file.type }),
       });
+
+      if (!res.ok) throw new Error("Failed to get upload URL");
+
       const { uploadUrl, blobUrl } = await res.json();
 
-      await fetch(uploadUrl, {
+      const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
         body: file,
         headers: { "Content-Type": file.type },
       });
 
+      if (!uploadRes.ok) throw new Error("Failed to upload image");
+
+      await fetch("/api/save-profile-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profilePicUrl: blobUrl }),
+      });
+
       setProfile((prev) => ({ ...prev, profilePicture: file, profilePictureUrl: blobUrl }));
     } catch (error) {
-      console.error("Image upload failed:", error);
+      console.error("Image upload error:", error);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("Submitted profile:", profile);
-    // Submit logic here (API call)
+    // Submit logic (API call) here
   };
 
   return (

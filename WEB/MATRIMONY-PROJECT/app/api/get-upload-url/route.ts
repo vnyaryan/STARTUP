@@ -4,15 +4,19 @@ import { type NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   const { filename, contentType } = await request.json();
 
-  // 1. Generate a secure presigned upload URL
+  // Generate secure presigned upload URL
   const { url, token } = await generateUploadUrl();
 
-  // 2. Construct the full upload URL with parameters
-  const uploadUrl = `${url}?token=${token}&filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`;
+  // Construct upload URL with required parameters
+  const uploadUrl = new URL(url);
+  uploadUrl.searchParams.set("token", token);
+  uploadUrl.searchParams.set("filename", filename);
+  uploadUrl.searchParams.set("contentType", contentType);
 
-  // 3. Return uploadUrl (to PUT the file) and blobUrl (to view it after upload)
+  // Return the uploadUrl for file upload (PUT method)
+  // and the blobUrl to access/view the image
   return NextResponse.json({
-    uploadUrl,
+    uploadUrl: uploadUrl.toString(),
     blobUrl: url,
   });
 }
