@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 
 export default function ProfileForm() {
   const { data: session } = useSession();
-  const userId = (session?.user as any)?.id; // Retrieve userId from session
+  const userId = (session?.user as any)?.id;
 
   const [profile, setProfile] = useState({
     name: "",
@@ -39,24 +39,32 @@ export default function ProfileForm() {
     if (!file) return;
     setUploading(true);
 
+    console.log("📤 Selected file:", file.name, file.type);
+
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("filename", file.name);
       formData.append("contentType", file.type);
 
+      console.log("📤 Sending file to /api/upload-image...");
+
       const response = await fetch("/api/upload-image", {
         method: "POST",
         body: formData,
       });
 
+      console.log("📥 Upload response status:", response.status);
+
       if (!response.ok) {
+        const errText = await response.text();
+        console.error("❌ Upload error response:", errText);
         throw new Error("Failed to upload image");
       }
 
       const { blobUrl } = await response.json();
+      console.log("✅ Upload successful, Blob URL:", blobUrl);
 
-      // Save profile image URL along with userId to Neon DB
       await fetch("/api/save-profile-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -65,7 +73,7 @@ export default function ProfileForm() {
 
       setProfile((prev) => ({ ...prev, profilePicture: file, profilePictureUrl: blobUrl }));
     } catch (error) {
-      console.error("Image upload error:", error);
+      console.error("❌ Image upload error:", error);
     } finally {
       setUploading(false);
     }
