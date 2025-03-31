@@ -20,5 +20,15 @@ async function createTables() {
   }
 }
 
-createTables()
+// Only run this function if this file is executed directly
+if (require.main === module) {
+  createTables()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error("Failed to create tables:", error)
+      process.exit(1)
+    })
+}
+
+export { createTables }
 

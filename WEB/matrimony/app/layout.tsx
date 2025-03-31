@@ -2,14 +2,6 @@ import type React from "react"
 import type { Metadata } from "next"
 import ThemeRegistry from "./theme-provider"
 import "./globals.css"
-import { createUserTable } from "@/lib/user-db"
-
-// Create tables on app initialization
-try {
-  createUserTable()
-} catch (error) {
-  console.error("Error creating tables:", error)
-}
 
 export const metadata: Metadata = {
   title: "Matrimony Website",

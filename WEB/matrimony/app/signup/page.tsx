@@ -5,19 +5,12 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { 
-  Container, 
-  Box, 
-  Typography, 
-  TextField, 
-  Button, 
-  Paper,
-  Alert,
-  InputAdornment,
-  IconButton,
-  CircularProgress,
-  FormControl\
-  Button, 
+import {
+  Container,
+  Box,
+  Typography,
+  TextField,
+  Button,
   Paper,
   Alert,
   InputAdornment,
@@ -28,8 +21,8 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  Grid
-} from '@mui/material';
+  Grid,
+} from "@mui/material"
 import Navbar from "@/components/Navbar"
 import Visibility from "@mui/icons-material/Visibility"
 import VisibilityOff from "@mui/icons-material/VisibilityOff"
