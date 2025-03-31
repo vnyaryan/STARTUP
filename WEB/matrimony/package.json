@@ -63,18 +63,10 @@
     "@emotion/styled": "latest",
     "@mui/material-pigment-css": "latest",
     "@mui/material": "latest",
-    "@mui/system": "latest",
-    "date-fns-jalali": "latest",
-    "dayjs": "latest",
-    "luxon": "latest",
-    "moment": "latest",
-    "moment-hijri": "latest",
-    "moment-jalaali": "latest",
     "pg": "latest",
     "@mui/icons-material": "latest",
-    "bcryptjs": "latest",
     "jose": "latest",
-    "@mui/x-date-pickers": "latest"
+    "bcryptjs": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

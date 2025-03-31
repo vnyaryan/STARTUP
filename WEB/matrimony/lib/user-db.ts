@@ -1,6 +1,6 @@
 import { query } from "./db"
 import type { User, UserSignupData, SafeUser } from "@/types/user"
-import bcrypt from "bcryptjs" // Changed from bcrypt to bcryptjs
+import bcrypt from "bcryptjs"
 
 export async function createUserTable() {
   await query(`

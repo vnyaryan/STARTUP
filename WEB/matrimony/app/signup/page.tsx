@@ -26,8 +26,6 @@ import {
 import Navbar from "@/components/Navbar"
 import Visibility from "@mui/icons-material/Visibility"
 import VisibilityOff from "@mui/icons-material/VisibilityOff"
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns"
-import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers"
 
 export default function Signup() {
   const router = useRouter()
@@ -36,7 +34,7 @@ export default function Signup() {
     password: "",
     confirmPassword: "",
     gender: "",
-    dob: null as Date | null,
+    dob: "", // Changed to string instead of Date
   })
   const [errors, setErrors] = useState({
     email: "",
@@ -57,13 +55,6 @@ export default function Signup() {
     // Clear error when user types
     if (errors[name as keyof typeof errors]) {
       setErrors((prev) => ({ ...prev, [name]: "" }))
-    }
-  }
-
-  const handleDateChange = (date: Date | null) => {
-    setFormData((prev) => ({ ...prev, dob: date }))
-    if (errors.dob) {
-      setErrors((prev) => ({ ...prev, dob: "" }))
     }
   }
 
@@ -109,6 +100,7 @@ export default function Signup() {
       newErrors.dob = "Date of birth is required"
       isValid = false
     } else {
+      // Calculate age
       const today = new Date()
       const birthDate = new Date(formData.dob)
       let age = today.getFullYear() - birthDate.getFullYear()
@@ -148,7 +140,7 @@ export default function Signup() {
           email: formData.email,
           password: formData.password,
           gender: formData.gender,
-          dob: formData.dob ? formData.dob.toISOString().split("T")[0] : null,
+          dob: formData.dob,
         }),
       })
 
@@ -286,21 +278,23 @@ export default function Signup() {
                 )}
               </FormControl>
 
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Date of Birth *"
-                  value={formData.dob}
-                  onChange={handleDateChange}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      margin: "normal",
-                      error: !!errors.dob,
-                      helperText: errors.dob,
-                    },
-                  }}
-                />
-              </LocalizationProvider>
+              {/* Replace MUI DatePicker with a simple date input */}
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="dob"
+                label="Date of Birth"
+                name="dob"
+                type="date"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                value={formData.dob}
+                onChange={handleChange}
+                error={!!errors.dob}
+                helperText={errors.dob || "Must be at least 18 years old"}
+              />
 
               <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2, py: 1.5 }} disabled={isLoading}>
                 {isLoading ? <CircularProgress size={24} /> : "Sign Up"}
