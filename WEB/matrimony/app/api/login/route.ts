@@ -1,23 +1,46 @@
 import { NextResponse } from "next/server"
-import { getUserByEmail } from "@/lib/data"
+import bcrypt from "bcryptjs" // Make sure we're using bcryptjs
+import { getUserByEmail } from "@/lib/user-db" // Import from user-db, not data
 
 export async function POST(request: Request) {
-  const { email, password } = await request.json()
+  try {
+    const { email, password } = await request.json()
 
-  // Inside the POST function
-  // Replace the user verification with:
-  const user = await getUserByEmail(email)
+    // Validate input
+    if (!email || !password) {
+      return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
+    }
 
-  if (!user) {
-    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
-  }
+    // Find user
+    const user = await getUserByEmail(email)
 
-  // TEMPORARY: Skip password verification for testing
-  // const passwordMatch = await bcrypt.compare(password, user.password);
-  const passwordMatch = true // TEMPORARY BYPASS
+    if (!user) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+    }
 
-  if (!passwordMatch) {
-    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+    console.log("User found, attempting password verification")
+
+    // TEMPORARY: For testing, you can uncomment this to bypass password verification
+    // const passwordMatch = true;
+
+    // Normal password verification
+    const passwordMatch = await bcrypt.compare(password, user.password)
+    console.log("Password verification result:", passwordMatch)
+
+    if (!passwordMatch) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+    }
+
+    // Remove password from user object
+    const { password: _, ...safeUser } = user
+
+    return NextResponse.json({
+      message: "Login successful",
+      user: safeUser,
+    })
+  } catch (error) {
+    console.error("Error during login:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
