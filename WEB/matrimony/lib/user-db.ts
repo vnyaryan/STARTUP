@@ -47,6 +47,8 @@ export async function verifyUser(email: string, password: string): Promise<SafeU
   }
 
   console.log("User found, comparing passwords")
+  console.log("Input password length:", password.length)
+  console.log("Stored password hash:", user.password)
   console.log("Stored password hash format check:", user.password.substring(0, 7)) // Should start with $2a$, $2b$, or $2y$
 
   try {

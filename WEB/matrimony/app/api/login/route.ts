@@ -1,43 +1,45 @@
 import { NextResponse } from "next/server"
-import bcrypt from "bcryptjs" // Make sure we're using bcryptjs
-import { getUserByEmail } from "@/lib/user-db" // Import from user-db, not data
+import { verifyUser } from "@/lib/user-db"
+import { signToken, setAuthCookie } from "@/lib/auth"
+import type { UserLoginData } from "@/types/user"
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json()
+    const body = await request.json()
+    const { email, password } = body as UserLoginData
+
+    console.log("Login attempt for:", email)
 
     // Validate input
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    // Find user
-    const user = await getUserByEmail(email)
+    // Verify user credentials
+    const user = await verifyUser(email, password)
 
     if (!user) {
+      console.log("Authentication failed for:", email)
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    console.log("User found, attempting password verification")
+    console.log("Authentication successful for:", email)
 
-    // TEMPORARY: For testing, you can uncomment this to bypass password verification
-    // const passwordMatch = true;
-
-    // Normal password verification
-    const passwordMatch = await bcrypt.compare(password, user.password)
-    console.log("Password verification result:", passwordMatch)
-
-    if (!passwordMatch) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
-    }
-
-    // Remove password from user object
-    const { password: _, ...safeUser } = user
-
-    return NextResponse.json({
-      message: "Login successful",
-      user: safeUser,
+    // Create JWT token
+    const token = await signToken({
+      userId: user.id,
+      email: user.email,
+      gender: user.gender,
     })
+
+    // Create response
+    const response = NextResponse.json({
+      message: "Login successful",
+      user,
+    })
+
+    // Set auth cookie
+    return setAuthCookie(response, token)
   } catch (error) {
     console.error("Error during login:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

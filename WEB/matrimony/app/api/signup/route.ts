@@ -1,12 +1,13 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { createUser, getUserByEmail } from "@/lib/user-db"
-import type { UserSignupData } from "@/types/user"
+import { NextResponse, type NextRequest } from "next/server"
+import bcrypt from "bcryptjs"
+import { getUserByEmail } from "@/lib/user-db"
+import { query } from "@/lib/db"
 import { signToken, setAuthCookie } from "@/lib/auth"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, gender, dob } = body as UserSignupData
+    const { email, password, gender, dob } = body
 
     // Validate input
     if (!email || !password || !gender || !dob) {
@@ -20,14 +21,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User already exists" }, { status: 409 })
     }
 
+    // Hash password with 10 rounds (same as in login verification)
+    console.log("Hashing password for signup")
+    const hashedPassword = await bcrypt.hash(password, 10)
+    console.log("Password hash created:", hashedPassword.substring(0, 10) + "...")
+
     // Create new user
-    const user = await createUser({ email, password, gender, dob })
+    const result = await query(
+      `INSERT INTO users (email, password, gender, dob) 
+       VALUES ($1, $2, $3, $4) 
+       RETURNING id, email, gender, dob, created_at`,
+      [email, hashedPassword, gender, dob],
+    )
+
+    const user = result.rows[0]
 
     // Create JWT token
     const token = await signToken({
       userId: user.id,
       email: user.email,
-      gender: user.gender,
     })
 
     // Create response
