@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Get token from cookies
-  const token = request.cookies.get("auth_token")?.value
+  const token = request.cookies.get("session_token")?.value
 
   // Check if user is authenticated (simplified check)
   const isAuthenticated = !!token
