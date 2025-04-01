@@ -1,3 +1,4 @@
+// Modify your existing login page to handle verification errors
 "use client"
 
 import type React from "react"
@@ -5,78 +6,20 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import {
-  Container,
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Paper,
-  Alert,
-  InputAdornment,
-  IconButton,
-  CircularProgress,
-} from "@mui/material"
-import Navbar from "@/components/Navbar"
-import Visibility from "@mui/icons-material/Visibility"
-import VisibilityOff from "@mui/icons-material/VisibilityOff"
 
-export default function Login() {
-  const router = useRouter()
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  })
-  const [errors, setErrors] = useState({
-    email: "",
-    password: "",
-  })
-  const [showPassword, setShowPassword] = useState(false)
+export default function LoginPage() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [needsVerification, setNeedsVerification] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-
-    // Clear error when user types
-    if (errors[name as keyof typeof errors]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }))
-    }
-  }
-
-  const validateForm = () => {
-    let isValid = true
-    const newErrors = { ...errors }
-
-    // Email validation
-    if (!formData.email) {
-      newErrors.email = "Email is required"
-      isValid = false
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid"
-      isValid = false
-    }
-
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = "Password is required"
-      isValid = false
-    }
-
-    setErrors(newErrors)
-    return isValid
-  }
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!validateForm()) {
-      return
-    }
-
     setIsLoading(true)
-    setErrorMessage("")
+    setError("")
+    setNeedsVerification(false)
 
     try {
       const response = await fetch("/api/login", {
@@ -84,106 +27,116 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ email, password }),
       })
 
       const data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(data.error || "Login failed")
+      if (response.ok) {
+        router.push("/dashboard")
+      } else {
+        if (data.needsVerification) {
+          setNeedsVerification(true)
+        }
+        setError(data.error || data.message || "Login failed")
       }
-
-      // Redirect to dashboard on success
-      router.push("/dashboard")
-      router.refresh()
     } catch (error) {
-      console.error("Login error:", error)
-      setErrorMessage(error instanceof Error ? error.message : "Login failed. Please try again.")
+      setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <>
-      <Navbar />
-      <Container component="main" maxWidth="xs" sx={{ mt: 8, mb: 8 }}>
-        <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-8 shadow-md">
+        <h1 className="mb-6 text-center text-2xl font-bold">Login</h1>
+
+        {needsVerification ? (
+          <div className="mb-6 rounded-md bg-yellow-50 p-4 text-center">
+            <p className="text-yellow-800">Your email is not verified.</p>
+            <p className="mt-2 text-sm text-yellow-700">
+              Please check your inbox for the verification email or{" "}
+              <Link
+                href={`/resend-verification?email=${encodeURIComponent(email)}`}
+                className="font-medium text-yellow-800 underline"
+              >
+                click here
+              </Link>{" "}
+              to resend it.
+            </p>
+          </div>
+        ) : error ? (
+          <div className="mb-6 rounded-md bg-red-50 p-4">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        ) : null}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                Remember me
+              </label>
+            </div>
+
+            <div className="text-sm">
+              <Link href="/reset-password" className="font-medium text-blue-600 hover:text-blue-500">
+                Forgot your password?
+              </Link>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
           >
-            <Typography component="h1" variant="h4" sx={{ mb: 3 }}>
-              Login
-            </Typography>
+            {isLoading ? "Logging in..." : "Login"}
+          </button>
 
-            {errorMessage && (
-              <Alert severity="error" sx={{ width: "100%", mb: 2 }}>
-                {errorMessage}
-              </Alert>
-            )}
-
-            <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: "100%" }}>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="email"
-                label="Email Address"
-                name="email"
-                autoComplete="email"
-                autoFocus
-                value={formData.email}
-                onChange={handleChange}
-                error={!!errors.email}
-                helperText={errors.email}
-              />
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="password"
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                id="password"
-                autoComplete="current-password"
-                value={formData.password}
-                onChange={handleChange}
-                error={!!errors.password}
-                helperText={errors.password}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={() => setShowPassword(!showPassword)}
-                        edge="end"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2, py: 1.5 }} disabled={isLoading}>
-                {isLoading ? <CircularProgress size={24} /> : "Login"}
-              </Button>
-              <Box sx={{ textAlign: "center", mt: 2 }}>
-                <Typography variant="body2">
-                  Don't have an account?{" "}
-                  <Link href="/signup" style={{ color: "#E83E8C", textDecoration: "none" }}>
-                    Sign Up
-                  </Link>
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        </Paper>
-      </Container>
-    </>
+          <div className="text-center text-sm">
+            Don't have an account?{" "}
+            <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
+              Sign up
+            </Link>
+          </div>
+        </form>
+      </div>
+    </div>
   )
 }
 
