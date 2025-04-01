@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { verifyToken } from "./lib/auth"
 
 // Add paths that should be protected
 const protectedPaths = ["/dashboard", "/profile", "/settings"]
@@ -14,8 +13,8 @@ export function middleware(request: NextRequest) {
   // Get token from cookies
   const token = request.cookies.get("auth_token")?.value
 
-  // Check if user is authenticated
-  const isAuthenticated = token && verifyToken(token)
+  // Check if user is authenticated (simplified check)
+  const isAuthenticated = !!token
 
   // Redirect authenticated users away from auth pages
   if (isAuthenticated && authPaths.some((path) => pathname.startsWith(path))) {
@@ -32,14 +31,12 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
+    // Match all request paths except for the ones starting with:
+    // - api (API routes)
+    // - _next/static (static files)
+    // - _next/image (image optimization files)
+    // - favicon.ico (favicon file)
+    // - public folder
     "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
   ],
 }
