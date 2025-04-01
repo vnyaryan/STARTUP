@@ -1,37 +1,19 @@
-import { Container, Typography, Box, Paper } from "@mui/material"
-import Navbar from "@/components/Navbar"
-import { getCurrentUser } from "@/lib/auth"
-import { redirect } from "next/navigation"
+import Link from "next/link"
 
-export default async function Dashboard() {
-  const user = await getCurrentUser()
-
-  if (!user) {
-    redirect("/login")
-  }
-
+export default function Dashboard() {
   return (
-    <>
-      <Navbar isLoggedIn={true} />
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
-        <Paper sx={{ p: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Welcome to Your Dashboard
-          </Typography>
-          <Typography variant="body1" paragraph>
-            You are logged in as {user.email}
-          </Typography>
-          <Box sx={{ mt: 4 }}>
-            <Typography variant="h5" gutterBottom>
-              Your Profile Information
-            </Typography>
-            <Typography>Email: {user.email}</Typography>
-            <Typography>Gender: {user.gender}</Typography>
-            <Typography>Account created: {new Date(user.created_at).toLocaleDateString()}</Typography>
-          </Box>
-        </Paper>
-      </Container>
-    </>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+      <p className="mb-4">Welcome to your dashboard!</p>
+      <div className="flex space-x-4">
+        <Link href="/profile" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+          View Profile
+        </Link>
+        <Link href="/settings" className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+          Settings
+        </Link>
+      </div>
+    </div>
   )
 }
 
