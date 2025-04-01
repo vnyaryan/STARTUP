@@ -1,7 +1,6 @@
-// Modify your existing signup route to include email verification
 import { NextResponse } from "next/server"
-import bcrypt from "bcrypt"
-import { db } from "@/lib/db"
+import bcryptjs from "bcryptjs" // Using bcryptjs instead of bcrypt
+import { query } from "@/lib/db"
 import { createVerificationToken } from "@/lib/user-db"
 import { sendVerificationEmail } from "@/lib/email"
 
@@ -16,17 +15,17 @@ export async function POST(request: Request) {
     }
 
     // Check if user already exists
-    const existingUser = await db.query("SELECT * FROM users WHERE email = $1", [email])
+    const existingUser = await query("SELECT * FROM users WHERE email = $1", [email])
 
     if (existingUser.rows.length > 0) {
       return NextResponse.json({ error: "User with this email already exists" }, { status: 409 })
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await bcryptjs.hash(password, 10)
 
     // Create user with email_verified set to false
-    const result = await db.query(
+    const result = await query(
       `INSERT INTO users (name, email, password, email_verified) 
        VALUES ($1, $2, $3, false) RETURNING id`,
       [name, email, hashedPassword],

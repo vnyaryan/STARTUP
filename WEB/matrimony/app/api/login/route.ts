@@ -1,7 +1,6 @@
-// Modify your existing login route to check for email verification
 import { NextResponse } from "next/server"
-import bcrypt from "bcrypt"
-import { db } from "@/lib/db"
+import bcryptjs from "bcryptjs" // Using bcryptjs instead of bcrypt
+import { query } from "@/lib/db"
 import { createSession } from "@/lib/auth"
 
 export async function POST(request: Request) {
@@ -15,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     // Find user
-    const result = await db.query("SELECT * FROM users WHERE email = $1", [email])
+    const result = await query("SELECT * FROM users WHERE email = $1", [email])
 
     if (result.rows.length === 0) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
@@ -36,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     // Verify password
-    const passwordMatch = await bcrypt.compare(password, user.password)
+    const passwordMatch = await bcryptjs.compare(password, user.password)
 
     if (!passwordMatch) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })

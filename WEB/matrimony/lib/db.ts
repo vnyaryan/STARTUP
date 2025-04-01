@@ -1,30 +1,19 @@
-import { Pool, type QueryResult } from "pg"
+// Simple database utility
+import { Pool } from "pg"
 
-// Create connection pool
-const pool = new Pool({
+// Create a new pool using the DATABASE_URL environment variable
+export const db = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: true,
-  },
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 })
 
-// Helper for running queries
-export async function query<T = any>(text: string, params: any[] = []): Promise<QueryResult<T>> {
-  const start = Date.now()
+// Helper function to execute queries
+export async function query(text: string, params: any[] = []) {
   try {
-    const res = await pool.query(text, params)
-    const duration = Date.now() - start
-    console.log("Executed query", { text, duration, rows: res.rowCount })
-    return res
+    return await db.query(text, params)
   } catch (error) {
-    console.error("Query error:", error)
+    console.error("Database query error:", error)
     throw error
   }
-}
-
-// For single-use connections (less efficient but sometimes needed)
-export async function getClient() {
-  const client = await pool.connect()
-  return client
 }
 
