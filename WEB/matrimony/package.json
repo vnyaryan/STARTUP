@@ -66,7 +66,9 @@
     "pg": "latest",
     "@mui/icons-material": "latest",
     "jose": "latest",
-    "bcryptjs": "latest"
+    "bcryptjs": "latest",
+	"bcrypt": "^5.1.1",
+	"resend": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^22",
@@ -74,6 +76,7 @@
     "@types/react-dom": "^19",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5"
+    "typescript": "^5",
+	"@types/bcrypt": "^5.0.2"
   }
 }
