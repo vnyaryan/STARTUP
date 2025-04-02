@@ -7,10 +7,10 @@ import { sendVerificationEmail } from "@/lib/email"
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, email, password } = body
+    const { name, email, password, gender } = body
 
     // Validate input
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !gender) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
@@ -26,9 +26,9 @@ export async function POST(request: Request) {
 
     // Create user with email_verified set to false
     const result = await query(
-      `INSERT INTO users (name, email, password, email_verified) 
-       VALUES ($1, $2, $3, false) RETURNING id`,
-      [name, email, hashedPassword],
+      `INSERT INTO users (name, email, password, email_verified, gender) 
+       VALUES ($1, $2, $3, false, $4) RETURNING id`,
+      [name, email, hashedPassword, gender],
     )
 
     const userId = result.rows[0].id
