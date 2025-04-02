@@ -3,9 +3,11 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 export default function ResendVerificationPage() {
+  const router = useRouter()
   const [email, setEmail] = useState("")
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
@@ -27,74 +29,65 @@ export default function ResendVerificationPage() {
 
       if (response.ok) {
         setStatus("success")
-        setMessage(data.message || "Verification email sent. Please check your inbox.")
+        setMessage(data.message || "Verification email sent successfully!")
       } else {
         setStatus("error")
         setMessage(data.error || "Failed to send verification email.")
       }
     } catch (error) {
       setStatus("error")
-      setMessage("An error occurred. Please try again later.")
+      setMessage("An error occurred while sending the verification email.")
+      console.error("Resend verification error:", error)
     }
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-8 shadow-md">
-        <h1 className="mb-6 text-center text-2xl font-bold">Resend Verification Email</h1>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-semibold mb-6 text-center">Resend Verification Email</h2>
 
-        {status === "success" ? (
-          <div className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-              <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-            </div>
-            <p className="mb-4 text-green-600">{message}</p>
-            <Link href="/login" className="text-blue-600 hover:underline">
-              Return to login
-            </Link>
+        {status === "success" && (
+          <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+            <p>{message}</p>
+            <p className="mt-2 text-sm">Please check your inbox and spam folder for the verification email.</p>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                placeholder="Enter your email"
-              />
-            </div>
-
-            {status === "error" && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="flex">
-                  <div className="text-sm text-red-700">{message}</div>
-                </div>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={status === "loading"}
-              className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-              {status === "loading" ? "Sending..." : "Resend Verification Email"}
-            </button>
-
-            <div className="text-center text-sm">
-              <Link href="/login" className="text-blue-600 hover:underline">
-                Back to login
-              </Link>
-            </div>
-          </form>
         )}
+
+        {status === "error" && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            <p>{message}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={status === "loading"}
+            className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-blue-300"
+          >
+            {status === "loading" ? "Sending..." : "Resend Verification Email"}
+          </button>
+        </form>
+
+        <div className="mt-4 text-center">
+          <Link href="/login" className="text-blue-500 hover:underline">
+            Return to login
+          </Link>
+        </div>
       </div>
     </div>
   )

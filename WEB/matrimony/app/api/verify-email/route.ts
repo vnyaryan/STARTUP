@@ -1,25 +1,41 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { verifyEmail } from "@/lib/user-db"
+import { query } from "@/lib/db"
+import { NextResponse } from "next/server"
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const token = searchParams.get("token")
+    const url = new URL(request.url)
+    const token = url.searchParams.get("token")
 
     if (!token) {
-      return NextResponse.json({ error: "Verification token is required" }, { status: 400 })
+      // Redirect to an error page instead of returning JSON
+      return NextResponse.redirect(new URL("/verification-failed?error=missing-token", url.origin))
     }
 
-    const verified = await verifyEmail(token)
+    // Find user with this token
+    const userResult = await query("SELECT * FROM users WHERE verification_token = $1", [token])
 
-    if (!verified) {
-      return NextResponse.json({ error: "Invalid or expired verification token" }, { status: 400 })
+    if (userResult.rows.length === 0) {
+      return NextResponse.redirect(new URL("/verification-failed?error=invalid-token", url.origin))
     }
 
-    return NextResponse.json({ success: true, message: "Email verified successfully" }, { status: 200 })
+    const user = userResult.rows[0]
+
+    // Check if token is expired
+    if (user.token_expiry && new Date(user.token_expiry) < new Date()) {
+      return NextResponse.redirect(new URL("/verification-failed?error=expired-token", url.origin))
+    }
+
+    // Mark email as verified and clear token
+    await query(
+      "UPDATE users SET email_verified = true, verification_token = NULL, token_expiry = NULL WHERE id = $1",
+      [user.id],
+    )
+
+    // Redirect to success page
+    return NextResponse.redirect(new URL("/verification-success", url.origin))
   } catch (error) {
     console.error("Email verification error:", error)
-    return NextResponse.json({ error: "An error occurred during email verification" }, { status: 500 })
+    return NextResponse.redirect(new URL("/verification-failed?error=server-error", url.origin))
   }
 }
 
