@@ -1,74 +1,79 @@
-import { NextResponse } from "next/server"
-import bcryptjs from "bcryptjs" // Using bcryptjs instead of bcrypt
 import { query } from "@/lib/db"
-import { createSession } from "@/lib/auth"
+import { compare } from "bcryptjs"
+import { sign } from "jsonwebtoken"
+import { cookies } from "next/headers"
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    const { email, password } = await request.json()
 
-    // Validate input
     if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
+      return Response.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    // Find user
-    const result = await query("SELECT * FROM users WHERE email = $1", [email])
+    // Find user by email
+    const userResult = await query("SELECT * FROM users WHERE email = $1", [email])
 
-    if (result.rows.length === 0) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+    if (userResult.rows.length === 0) {
+      return Response.json({ error: "Invalid email or password" }, { status: 401 })
     }
 
-    const user = result.rows[0]
+    const user = userResult.rows[0]
 
     // Check if email is verified
     if (!user.email_verified) {
-      return NextResponse.json(
+      return Response.json(
         {
           error: "Email not verified",
           needsVerification: true,
-          message: "Please verify your email before logging in.",
         },
         { status: 403 },
       )
     }
 
     // Verify password
-    const passwordMatch = await bcryptjs.compare(password, user.password)
+    const passwordValid = await compare(password, user.password)
 
-    if (!passwordMatch) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+    if (!passwordValid) {
+      return Response.json({ error: "Invalid email or password" }, { status: 401 })
     }
 
-    // Create session
-    const session = await createSession(user.id)
-
-    // Set cookie and return user data
-    const response = NextResponse.json(
+    // Create JWT token
+    const token = sign(
       {
-        success: true,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        },
+        userId: user.id,
+        email: user.email,
+        name: user.name,
       },
-      { status: 200 },
+      process.env.JWT_SECRET || "fallback-secret-key-for-development-only",
+      { expiresIn: "7d" },
     )
 
-    response.cookies.set("session_token", session.token, {
+    // Set cookie
+    cookies().set({
+      name: "auth_token",
+      value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 1 week
       path: "/",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      sameSite: "strict",
     })
 
-    return response
+    // Return user data (excluding sensitive information)
+    return Response.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        gender: user.gender,
+        dob: user.dob,
+      },
+    })
   } catch (error) {
     console.error("Login error:", error)
-    return NextResponse.json({ error: "An error occurred during login" }, { status: 500 })
+    return Response.json({ error: "An error occurred during login" }, { status: 500 })
   }
 }
 

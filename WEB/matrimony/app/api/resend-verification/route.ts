@@ -1,51 +1,57 @@
-import { NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { createVerificationToken } from "@/lib/user-db"
+import { query } from "@/lib/db"
 import { sendVerificationEmail } from "@/lib/email"
+import { v4 as uuidv4 } from "uuid"
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { email } = body
+    const { email } = await request.json()
 
     if (!email) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 })
+      return Response.json({ error: "Email is required" }, { status: 400 })
     }
 
-    // Check if user exists
-    const userResult = await db.query("SELECT id, email_verified FROM users WHERE email = $1", [email])
+    // Check if user exists and is not already verified
+    const userResult = await query("SELECT * FROM users WHERE email = $1", [email])
 
     if (userResult.rows.length === 0) {
       // Don't reveal that the user doesn't exist for security reasons
-      return NextResponse.json(
-        { success: true, message: "If your email exists in our system, a verification link has been sent." },
-        { status: 200 },
-      )
+      return Response.json({
+        success: true,
+        message: "If your email exists in our system, a verification email has been sent.",
+      })
     }
 
     const user = userResult.rows[0]
 
-    // If already verified, no need to send again
     if (user.email_verified) {
-      return NextResponse.json(
-        { success: true, message: "Your email is already verified. Please login." },
-        { status: 200 },
-      )
+      return Response.json({
+        success: true,
+        message: "Your email is already verified. You can now log in.",
+      })
     }
 
-    // Generate new verification token
-    const verificationToken = await createVerificationToken(user.id)
+    // Generate new verification token (UUID format)
+    const verificationToken = uuidv4()
+    const tokenExpiry = new Date()
+    tokenExpiry.setHours(tokenExpiry.getHours() + 24) // Token valid for 24 hours
+
+    // Update user with new token
+    await query("UPDATE users SET verification_token = $1, token_expiry = $2 WHERE id = $3", [
+      verificationToken,
+      tokenExpiry,
+      user.id,
+    ])
 
     // Send verification email
     await sendVerificationEmail(email, verificationToken)
 
-    return NextResponse.json(
-      { success: true, message: "Verification email sent. Please check your inbox." },
-      { status: 200 },
-    )
+    return Response.json({
+      success: true,
+      message: "Verification email sent. Please check your inbox.",
+    })
   } catch (error) {
     console.error("Resend verification error:", error)
-    return NextResponse.json({ error: "An error occurred while resending verification email" }, { status: 500 })
+    return Response.json({ error: "An error occurred while sending the verification email" }, { status: 500 })
   }
 }
 
