@@ -4,6 +4,7 @@ import { query } from '@/lib/db';
 export async function POST(request: Request) {
   try {
     const data = await request.json();
+    console.log("Received data:", data); // For debugging
     
     // Validate the date before using it
     if (!data.dob) {
