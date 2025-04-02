@@ -19,6 +19,8 @@ export async function POST(request: Request) {
     // Format the date as YYYY-MM-DD for PostgreSQL
     const formattedDob = dobDate.toISOString().split('T')[0];
     
+    console.log("Formatted DOB:", formattedDob); // For debugging
+    
     const result = await query(
       `INSERT INTO users (email, password, gender, dob, name, email_verified) 
        VALUES ($1, $2, $3, $4, $5, $6) 
