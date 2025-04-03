@@ -1,181 +1,160 @@
-"use server"
-
 import { cookies } from "next/headers"
 import { SignJWT, jwtVerify } from "jose"
-import { db } from "./db"
-import { compare, hash } from "bcrypt"
-import { sendVerificationEmail, sendWelcomeEmail } from "./email"
-import { v4 as uuidv4 } from "uuid"
+import bcryptjs from "bcryptjs" // Changed from bcrypt to bcryptjs
+import { query } from "./db"
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
+const COOKIE_NAME = "auth_token"
 
-export async function register(email: string, password: string, username: string) {
+// Hash password
+export async function hashPassword(password: string): Promise<string> {
+  return await bcryptjs.hash(password, 10) // Using bcryptjs instead
+}
+
+// Compare password with hash
+export async function comparePasswords(password: string, hashedPassword: string): Promise<boolean> {
+  return await bcryptjs.compare(password, hashedPassword) // Using bcryptjs instead
+}
+
+// Create JWT token
+export async function createToken(payload: any): Promise<string> {
+  const token = await new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("24h")
+    .sign(new TextEncoder().encode(JWT_SECRET))
+
+  return token
+}
+
+// Verify JWT token
+export async function verifyToken(token: string): Promise<any> {
   try {
-    // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { email },
-    })
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET))
+    return payload
+  } catch (error) {
+    return null
+  }
+}
 
-    if (existingUser) {
-      return { success: false, error: "User with this email already exists" }
+// Get current user from token
+export async function getCurrentUser() {
+  const cookieStore = cookies()
+  const token = cookieStore.get(COOKIE_NAME)?.value
+
+  if (!token) {
+    return null
+  }
+
+  try {
+    const payload = await verifyToken(token)
+    if (!payload) return null
+
+    const result = await query("SELECT id, username, email, email_verified FROM users WHERE id = $1", [payload.id])
+
+    if (result.rows.length === 0) {
+      return null
     }
 
-    // Hash password
-    const hashedPassword = await hash(password, 10)
-
-    // Generate verification token
-    const verificationToken = uuidv4()
-
-    // Create user
-    const user = await db.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        username,
-        verificationToken,
-        tokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-      },
-    })
-
-    // Send verification email
-    await sendVerificationEmail(email, verificationToken)
-
-    return { success: true, userId: user.id }
+    return result.rows[0]
   } catch (error) {
-    console.error("Registration error:", error)
-    return { success: false, error: "Failed to register user" }
+    console.error("Error getting current user", error)
+    return null
+  }
+}
+
+// Set auth cookie (for server actions)
+export function setAuthCookie(token: string): void {
+  const cookieStore = cookies()
+  if (cookieStore) {
+    cookieStore.set(COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24, // 1 day
+      path: "/",
+      sameSite: "lax",
+    })
+  }
+}
+
+// Get auth cookie
+export function getAuthCookie(): string | undefined {
+  return cookies().get(COOKIE_NAME)?.value
+}
+
+// Remove auth cookie (for server actions)
+export function removeAuthCookie(): void {
+  const cookieStore = cookies()
+  if (cookieStore) {
+    cookieStore.delete(COOKIE_NAME)
+  }
+}
+
+// Verify authentication for API routes
+export async function verifyAuth(request: Request) {
+  const token = request.headers.get("Authorization")?.split("Bearer ")[1] || request.cookies.get(COOKIE_NAME)?.value
+
+  if (!token) {
+    return {
+      success: false,
+      error: "Authentication required",
+      status: 401,
+    }
+  }
+
+  const verificationResult = await verifyToken(token)
+
+  if (!verificationResult) {
+    return {
+      success: false,
+      error: "Invalid or expired token",
+      status: 401,
+    }
+  }
+
+  try {
+    const result = await query("SELECT id, username, email, email_verified FROM users WHERE id = $1", [
+      verificationResult.id,
+    ])
+
+    if (result.rows.length === 0) {
+      return {
+        success: false,
+        error: "User not found",
+        status: 401,
+      }
+    }
+
+    return {
+      success: true,
+      user: result.rows[0],
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: "Server error",
+      status: 500,
+    }
   }
 }
 
 export async function login(email: string, password: string) {
   try {
-    // Find user
-    const user = await db.user.findUnique({
-      where: { email },
-    })
-
-    if (!user) {
+    const result = await query("SELECT * FROM users WHERE email = $1", [email])
+    if (result.rows.length === 0) {
       return { success: false, error: "Invalid email or password" }
     }
-
-    // Check if email is verified
-    if (!user.emailVerified) {
-      return { success: false, error: "Please verify your email before logging in" }
-    }
-
-    // Verify password
-    const passwordMatch = await compare(password, user.password)
+    const user = result.rows[0]
+    const passwordMatch = await comparePasswords(password, user.password)
     if (!passwordMatch) {
       return { success: false, error: "Invalid email or password" }
     }
-
-    // Create session
-    const token = await new SignJWT({ userId: user.id, email: user.email })
-      .setProtectedHeader({ alg: "HS256" })
-      .setExpirationTime("7d")
-      .sign(new TextEncoder().encode(JWT_SECRET))
-
-    // Set cookie
-    const cookieStore = cookies()
-    if (cookieStore) {
-      cookieStore.set({
-        name: "auth-token",
-        value: token,
-        httpOnly: true,
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 60 * 60 * 24 * 7, // 1 week
-      })
-    }
-
-    return { success: true, userId: user.id }
+    const token = await createToken({ id: user.id, username: user.username })
+    setAuthCookie(token)
+    return { success: true, user }
   } catch (error) {
     console.error("Login error:", error)
-    return { success: false, error: "Failed to login" }
-  }
-}
-
-export async function logout() {
-  const cookieStore = cookies()
-  if (cookieStore) {
-    cookieStore.delete("auth-token")
-  }
-  return { success: true }
-}
-
-export async function verifyEmail(token: string) {
-  try {
-    // Find user with this token
-    const user = await db.user.findFirst({
-      where: {
-        verificationToken: token,
-        tokenExpiry: { gt: new Date() },
-      },
-    })
-
-    if (!user) {
-      return { success: false, error: "Invalid or expired verification token" }
-    }
-
-    // Update user
-    await db.user.update({
-      where: { id: user.id },
-      data: {
-        emailVerified: true,
-        verificationToken: null,
-        tokenExpiry: null,
-      },
-    })
-
-    // Send welcome email
-    await sendWelcomeEmail(user.email, user.username)
-
-    return { success: true }
-  } catch (error) {
-    console.error("Email verification error:", error)
-    return { success: false, error: "Failed to verify email" }
-  }
-}
-
-export async function getSession() {
-  try {
-    const token = cookies().get("auth-token")?.value
-
-    if (!token) {
-      return null
-    }
-
-    const verified = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET))
-
-    return verified.payload
-  } catch (error) {
-    return null
-  }
-}
-
-export async function getUserProfile() {
-  try {
-    const session = await getSession()
-
-    if (!session || !session.userId) {
-      return null
-    }
-
-    const user = await db.user.findUnique({
-      where: { id: session.userId as string },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        profile: true,
-        createdAt: true,
-      },
-    })
-
-    return user
-  } catch (error) {
-    console.error("Get user profile error:", error)
-    return null
+    return { success: false, error: "An unexpected error occurred" }
   }
 }
 
