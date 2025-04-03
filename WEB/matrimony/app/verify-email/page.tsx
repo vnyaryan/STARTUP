@@ -10,6 +10,7 @@ async function verifyEmail(token: string) {
       headers: {
         "Content-Type": "application/json",
       },
+      cache: "no-store", // Important: Don't cache this request
     })
 
     return await response.json()
