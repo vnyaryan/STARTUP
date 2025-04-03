@@ -1,133 +1,83 @@
-import { Container, Typography, Box, Button, Grid, Paper } from "@mui/material"
-import Navbar from "@/components/Navbar"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import { getCurrentUser } from "@/lib/auth"
-import FavoriteIcon from "@mui/icons-material/Favorite"
-import SearchIcon from "@mui/icons-material/Search"
-import SecurityIcon from "@mui/icons-material/Security"
 
 export default async function Home() {
   const user = await getCurrentUser()
-  const isLoggedIn = !!user
 
   return (
-    <main>
-      <Navbar isLoggedIn={isLoggedIn} />
-
-      {/* Hero Section */}
-      <Box
-        sx={{
-          bgcolor: "primary.main",
-          color: "white",
-          py: 8,
-          textAlign: "center",
-        }}
-      >
-        <Container maxWidth="md">
-          <Typography variant="h2" component="h1" gutterBottom>
-            Find Your Perfect Match
-          </Typography>
-          <Typography variant="h5" component="h2" gutterBottom>
-            Join thousands of happy couples who found their soulmate with us
-          </Typography>
-          <Box sx={{ mt: 4 }}>
-            {!isLoggedIn && (
-              <Button
-                component={Link}
-                href="/signup"
-                variant="contained"
-                size="large"
-                sx={{
-                  bgcolor: "white",
-                  color: "primary.main",
-                  "&:hover": {
-                    bgcolor: "grey.100",
-                  },
-                  px: 4,
-                  py: 1.5,
-                  fontSize: "1.1rem",
-                }}
-              >
-                Get Started
-              </Button>
-            )}
-          </Box>
-        </Container>
-      </Box>
-
-      {/* Features Section */}
-      <Container maxWidth="lg" sx={{ py: 8 }}>
-        <Typography variant="h3" component="h2" align="center" gutterBottom>
-          Why Choose Us
-        </Typography>
-        <Grid container spacing={4} sx={{ mt: 2 }}>
-          <Grid item xs={12} md={4}>
-            <Paper elevation={0} sx={{ p: 4, height: "100%", textAlign: "center" }}>
-              <FavoriteIcon color="primary" sx={{ fontSize: 60, mb: 2 }} />
-              <Typography variant="h5" component="h3" gutterBottom>
-                Perfect Matches
-              </Typography>
-              <Typography color="text.secondary">
-                Our advanced matching algorithm helps you find the most compatible partners based on your preferences.
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Paper elevation={0} sx={{ p: 4, height: "100%", textAlign: "center" }}>
-              <SearchIcon color="primary" sx={{ fontSize: 60, mb: 2 }} />
-              <Typography variant="h5" component="h3" gutterBottom>
-                Extensive Search
-              </Typography>
-              <Typography color="text.secondary">
-                Search for potential matches using multiple criteria including location, age, interests, and more.
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Paper elevation={0} sx={{ p: 4, height: "100%", textAlign: "center" }}>
-              <SecurityIcon color="primary" sx={{ fontSize: 60, mb: 2 }} />
-              <Typography variant="h5" component="h3" gutterBottom>
-                Safe & Secure
-              </Typography>
-              <Typography color="text.secondary">
-                Your privacy and security are our top priorities. All profiles are verified and your data is protected.
-              </Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-      </Container>
-
-      {/* Call to Action */}
-      <Box sx={{ bgcolor: "grey.100", py: 8, textAlign: "center" }}>
-        <Container maxWidth="md">
-          <Typography variant="h3" component="h2" gutterBottom>
-            Ready to Find Your Soulmate?
-          </Typography>
-          <Typography variant="body1" paragraph sx={{ mb: 4 }}>
-            Join thousands of happy couples who found their perfect match with us.
-          </Typography>
-          {!isLoggedIn && (
-            <Box>
-              <Button component={Link} href="/signup" variant="contained" color="primary" size="large" sx={{ mr: 2 }}>
-                Sign Up Now
-              </Button>
-              <Button component={Link} href="/login" variant="outlined" color="primary" size="large">
-                Login
-              </Button>
-            </Box>
+    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-rose-100">
+      <header className="container mx-auto py-6 px-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-rose-600">Matrimony</h1>
+        <div className="space-x-4">
+          {user ? (
+            <Link href="/dashboard">
+              <Button variant="outline">Dashboard</Button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button variant="outline">Login</Button>
+              </Link>
+              <Link href="/signup">
+                <Button>Sign Up</Button>
+              </Link>
+            </>
           )}
-        </Container>
-      </Box>
+        </div>
+      </header>
 
-      {/* Footer */}
-      <Box sx={{ bgcolor: "grey.900", color: "white", py: 6 }}>
-        <Container maxWidth="lg">
-          <Typography variant="body2" align="center">
-            © {new Date().getFullYear()} Matrimony Website. All rights reserved.
-          </Typography>
-        </Container>
-      </Box>
-    </main>
+      <main className="container mx-auto px-4 py-16">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-4xl font-bold text-gray-900 mb-6">Find Your Perfect Match</h2>
+          <p className="text-xl text-gray-600 mb-8">
+            Join our community and start your journey to find your life partner.
+          </p>
+
+          {!user && (
+            <div className="flex justify-center gap-4">
+              <Link href="/signup">
+                <Button size="lg" className="bg-rose-600 hover:bg-rose-700">
+                  Create Account
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button size="lg" variant="outline">
+                  Login
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-16 grid md:grid-cols-3 gap-8">
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-3">Create Your Profile</h3>
+            <p className="text-gray-600">
+              Sign up and create your detailed profile to showcase yourself to potential matches.
+            </p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-3">Find Compatible Matches</h3>
+            <p className="text-gray-600">
+              Browse through profiles and find people who match your preferences and values.
+            </p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-3">Connect & Communicate</h3>
+            <p className="text-gray-600">
+              Start conversations with potential matches and take the first step towards your future.
+            </p>
+          </div>
+        </div>
+      </main>
+
+      <footer className="bg-gray-800 text-white py-8 mt-16">
+        <div className="container mx-auto px-4 text-center">
+          <p>&copy; {new Date().getFullYear()} Matrimony Website. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
   )
 }
 
