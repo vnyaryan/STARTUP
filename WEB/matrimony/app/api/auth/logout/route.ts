@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { removeAuthCookie } from "@/lib/auth"
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +9,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Remove auth cookie
-    removeAuthCookie(response)
+    response.cookies.delete("auth_token")
 
     return response
   } catch (error) {

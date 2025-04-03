@@ -1,5 +1,4 @@
 import { cookies } from "next/headers"
-import type { NextResponse } from "next/server"
 import { SignJWT, jwtVerify } from "jose"
 import bcrypt from "bcryptjs"
 import { query } from "./db"
@@ -39,23 +38,15 @@ export async function verifyToken(token: string): Promise<any> {
   }
 }
 
-// Set auth cookie
-export function setAuthCookie(token: string, response?: NextResponse): void {
-  const cookieOptions = {
+// Set auth cookie (for server actions)
+export function setAuthCookie(token: string): void {
+  cookies().set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     maxAge: 60 * 60 * 24, // 1 day
     path: "/",
-    sameSite: "lax" as const,
-  }
-
-  if (response) {
-    // For API routes
-    response.cookies.set(COOKIE_NAME, token, cookieOptions)
-  } else {
-    // For server actions
-    cookies().set(COOKIE_NAME, token, cookieOptions)
-  }
+    sameSite: "lax",
+  })
 }
 
 // Get auth cookie
@@ -63,15 +54,9 @@ export function getAuthCookie(): string | undefined {
   return cookies().get(COOKIE_NAME)?.value
 }
 
-// Remove auth cookie
-export function removeAuthCookie(response?: NextResponse): void {
-  if (response) {
-    // For API routes
-    response.cookies.delete(COOKIE_NAME)
-  } else {
-    // For server actions
-    cookies().delete(COOKIE_NAME)
-  }
+// Remove auth cookie (for server actions)
+export function removeAuthCookie(): void {
+  cookies().delete(COOKIE_NAME)
 }
 
 // Get current user

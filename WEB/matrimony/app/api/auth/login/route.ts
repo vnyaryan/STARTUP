@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { comparePasswords, createToken, setAuthCookie } from "@/lib/auth"
+import { comparePasswords, createToken } from "@/lib/auth"
 import { query } from "@/lib/db"
 
 // Validation schema
@@ -86,7 +86,13 @@ export async function POST(request: NextRequest) {
     })
 
     // Set auth cookie
-    setAuthCookie(token, response)
+    response.cookies.set("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24, // 1 day
+      path: "/",
+      sameSite: "lax",
+    })
 
     return response
   } catch (error) {
