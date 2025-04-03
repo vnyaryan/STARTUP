@@ -1,9 +1,29 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { getCurrentUser } from "@/lib/auth"
+import { cookies } from "next/headers"
+import { verifyToken } from "@/lib/auth"
+import { query } from "@/lib/db"
 
 export default async function Home() {
-  const user = await getCurrentUser()
+  // Get the auth token from cookies
+  const cookieStore = cookies()
+  const token = cookieStore.get("auth_token")?.value
+
+  // Check if user is authenticated
+  let user = null
+  if (token) {
+    try {
+      const payload = await verifyToken(token)
+      if (payload && payload.id) {
+        const result = await query("SELECT id, username, email FROM users WHERE id = $1", [payload.id])
+        if (result.rows.length > 0) {
+          user = result.rows[0]
+        }
+      }
+    } catch (error) {
+      console.error("Error verifying token:", error)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 to-rose-100">
