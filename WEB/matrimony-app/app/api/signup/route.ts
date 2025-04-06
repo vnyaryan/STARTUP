@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log("Request body:", JSON.stringify(body));
     
-    const { username, email, password, date_of_birth, gender, location } = body;
+    const { username, email, password, date_of_birth, gender } = body;
 
     // Validate required fields
     if (!username || !email || !password || !date_of_birth || !gender) {
@@ -102,8 +102,7 @@ export async function POST(request: NextRequest) {
       email,
       password_hash,
       date_of_birth: new Date(date_of_birth),
-      gender,
-      location,
+      gender
     });
     
     console.log("User created successfully:", newUser.id);
@@ -118,7 +117,6 @@ export async function POST(request: NextRequest) {
           email: newUser.email,
           date_of_birth: newUser.date_of_birth,
           gender: newUser.gender,
-          location: newUser.location,
           created_at: newUser.created_at,
         },
       },
