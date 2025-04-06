@@ -64,6 +64,8 @@
   },
   "devDependencies": {
     "@types/node": "^22",
+    "@types/bcrypt": "^5.0.2",
+    "@types/pg": "^8.10.9",    
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8",
