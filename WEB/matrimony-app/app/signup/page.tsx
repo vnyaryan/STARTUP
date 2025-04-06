@@ -40,8 +40,7 @@ export default function SignupPage() {
         email: formData.email,
         password: formData.password,
         date_of_birth: formData.dateOfBirth,
-        gender: formData.gender,
-        location: "" // Optional field
+        gender: formData.gender
       }
       
       console.log("Submitting data:", apiData)
