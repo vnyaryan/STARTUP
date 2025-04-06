@@ -58,14 +58,13 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.6",
     "zod": "^3.24.1",
-    "bcryptjs": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "pg": "^8.11.3"
     
   },
   "devDependencies": {
     "@types/node": "^22",
-    "@types/bcryptjs": "^5.0.2",
-    "@types/pg": "^8.10.9",    
+    "@types/bcryptjs": "^2.4.6", 
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8",
