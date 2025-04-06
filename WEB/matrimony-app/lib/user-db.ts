@@ -1,19 +1,19 @@
-import { query, queryOne } from "./db";
+import { queryOne } from "./db"
 
 // Define TypeScript interfaces for better type safety
 export interface NewUser {
-  username: string;
-  email: string;
-  password_hash: string;
-  date_of_birth: Date;
-  gender: string;
-  location?: string;
+  username: string
+  email: string
+  password_hash: string
+  date_of_birth: Date
+  gender: string
+  location?: string
 }
 
 export interface User extends NewUser {
-  id: string;
-  created_at: Date;
-  updated_at: Date;
+  id: string
+  created_at: Date
+  updated_at: Date
 }
 
 /**
@@ -22,9 +22,9 @@ export interface User extends NewUser {
  * @returns boolean indicating if the email exists
  */
 export async function checkEmailExists(email: string): Promise<boolean> {
-  const sql = "SELECT EXISTS(SELECT 1 FROM users WHERE email = $1) AS exists";
-  const result = await queryOne(sql, [email]);
-  return result.exists;
+  const sql = "SELECT EXISTS(SELECT 1 FROM users WHERE email = $1) AS exists"
+  const result = await queryOne<{ exists: boolean }>(sql, [email])
+  return result?.exists || false
 }
 
 /**
@@ -33,18 +33,21 @@ export async function checkEmailExists(email: string): Promise<boolean> {
  * @returns The created user object
  */
 export async function createUser(userData: NewUser): Promise<User> {
-  const { username, email, password_hash, date_of_birth, gender, location } = userData;
-  
+  const { username, email, password_hash, date_of_birth, gender, location } = userData
+
   const sql = `
     INSERT INTO users (username, email, password_hash, date_of_birth, gender, location)
     VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING id, username, email, date_of_birth, gender, location, created_at, updated_at
-  `;
-  
-  const values = [username, email, password_hash, date_of_birth, gender, location || null];
-  
-  const result = await queryOne(sql, values);
-  return result as User;
+  `
+
+  const values = [username, email, password_hash, date_of_birth, gender, location || null]
+
+  const result = await queryOne<User>(sql, values)
+  if (!result) {
+    throw new Error("Failed to create user")
+  }
+  return result
 }
 
 /**
@@ -57,10 +60,9 @@ export async function getUserById(id: string): Promise<User | null> {
     SELECT id, username, email, date_of_birth, gender, location, created_at, updated_at
     FROM users
     WHERE id = $1
-  `;
-  
-  const result = await queryOne(sql, [id]);
-  return result || null;
+  `
+
+  return await queryOne<User>(sql, [id])
 }
 
 /**
@@ -73,10 +75,9 @@ export async function getUserByEmail(email: string): Promise<User | null> {
     SELECT id, username, email, date_of_birth, gender, location, created_at, updated_at
     FROM users
     WHERE email = $1
-  `;
-  
-  const result = await queryOne(sql, [email]);
-  return result || null;
+  `
+
+  return await queryOne<User>(sql, [email])
 }
 
 /**
@@ -89,8 +90,8 @@ export async function getUserWithPasswordByEmail(email: string): Promise<(User &
     SELECT id, username, email, password_hash, date_of_birth, gender, location, created_at, updated_at
     FROM users
     WHERE email = $1
-  `;
-  
-  const result = await queryOne(sql, [email]);
-  return result || null;
+  `
+
+  return await queryOne<User & { password_hash: string }>(sql, [email])
 }
+
