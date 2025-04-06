@@ -1,49 +1,36 @@
-import { Pool } from "pg";
+import { NextRequest, NextResponse } from "next/server";
+import bcryptjs from "bcryptjs";
+import { checkEmailExists, createUser } from "@/lib/user-db";
 
-// Create a new pool using the DATABASE_URL environment variable
-export const db = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: true } : false,
-});
+// Helper function to validate email format
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
 
-// Helper function to execute queries
-export async function query(text: string, params: any[] = []) {
-  const start = Date.now();
-  try {
-    const result = await db.query(text, params);
-    const duration = Date.now() - start;
-    
-    // Log query execution time in development
-    if (process.env.NODE_ENV !== "production") {
-      console.log("Executed query", { text, duration, rows: result.rowCount });
-    }
-    
-    return result;
-  } catch (error) {
-    console.error("Database query error:", error);
-    throw error;
+// Helper function to validate date of birth (must be at least 18 years old)
+function isValidAge(dateOfBirth: string): boolean {
+  const dob = new Date(dateOfBirth);
+  const today = new Date();
+  const age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    return age - 1 >= 18;
   }
+  
+  return age >= 18;
 }
 
-// Helper function to get a single row
-export async function queryOne(text: string, params: any[] = []) {
-  const result = await query(text, params);
-  return result.rows[0];
-}
-
-// Helper function to get multiple rows
-export async function queryMany(text: string, params: any[] = []) {
-  const result = await query(text, params);
-  return result.rows;
-}
-
-// Function to check database connection
-export async function testConnection() {
+export async function POST(request: NextRequest) {
   try {
-    const result = await query("SELECT NOW()");
-    return { connected: true, timestamp: result.rows[0].now };
-  } catch (error) {
-    console.error("Database connection test failed:", error);
-    return { connected: false, error };
-  }
-}
+    console.log("Signup API route called");
+    
+    // Parse request body
+    const body = await request.json();
+    console.log("Request body:", JSON.stringify(body));
+    
+    const { username, email, password, date_of_birth, gender } = body;
+
+    // Validate required fields
+    if (!username || !

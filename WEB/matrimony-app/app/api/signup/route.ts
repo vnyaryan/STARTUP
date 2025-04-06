@@ -102,7 +102,8 @@ export async function POST(request: NextRequest) {
       email,
       password_hash,
       date_of_birth: new Date(date_of_birth),
-      gender
+      gender,
+      // Removed location field
     });
     
     console.log("User created successfully:", newUser.id);

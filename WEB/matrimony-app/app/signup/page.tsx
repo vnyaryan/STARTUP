@@ -41,6 +41,7 @@ export default function SignupPage() {
         password: formData.password,
         date_of_birth: formData.dateOfBirth,
         gender: formData.gender
+        // Location field removed
       }
       
       console.log("Submitting data:", apiData)
