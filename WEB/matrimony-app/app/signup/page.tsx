@@ -17,7 +17,7 @@ export default function SignupPage() {
     email: "",
     password: "",
     dateOfBirth: "",
-    gender: "male", // Default value
+
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
