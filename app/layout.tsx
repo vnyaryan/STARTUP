@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/context/auth-context"
 import NavigationHelper from "@/components/navigation-helper"
+import "../lib/react-polyfill"
 
 const inter = Inter({ subsets: ["latin"] })
 
