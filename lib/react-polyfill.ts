@@ -1,8 +1,5 @@
 "use client"
 
-// This is a temporary polyfill for useEffectEvent
-// Remove this file once you've fixed all instances of useEffectEvent
-
 import { useCallback } from "react"
 
 // Simple polyfill that just uses useCallback instead
@@ -10,9 +7,18 @@ export function useEffectEvent<T extends (...args: any[]) => any>(callback: T): 
   return useCallback(callback, []) as T
 }
 
-// Add this to React namespace
-declare module "react" {
-  interface React {
-    useEffectEvent: typeof useEffectEvent
+// Patch React namespace
+if (typeof window !== "undefined") {
+  // @ts-ignore - Add useEffectEvent to React global
+  if (!React.useEffectEvent) {
+    // @ts-ignore
+    React.useEffectEvent = useEffectEvent
+  }
+}
+
+// Add this to React namespace for TypeScript
+declare global {
+  namespace React {
+    function useEffectEvent<T extends (...args: any[]) => any>(callback: T): T
   }
 }
