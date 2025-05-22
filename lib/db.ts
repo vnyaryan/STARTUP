@@ -70,13 +70,40 @@ export async function initializeDatabase() {
           email_id VARCHAR(255) UNIQUE NOT NULL,
           password VARCHAR(255) NOT NULL,
           date_of_birth DATE NOT NULL,
+          username TEXT,
+          age NUMERIC,
+          sex TEXT,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )
       `
       console.log("Table created successfully")
     } else {
-      console.log("Table already exists, skipping creation")
+      // Check if the new columns exist
+      const columnsExist = await sql`
+        SELECT 
+          EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='user_details' AND column_name='username') as username_exists,
+          EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='user_details' AND column_name='age') as age_exists,
+          EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='user_details' AND column_name='sex') as sex_exists
+      `
+
+      // Add columns if they don't exist
+      if (!columnsExist[0].username_exists) {
+        await sql`ALTER TABLE user_details ADD COLUMN username TEXT`
+        console.log("Added username column")
+      }
+
+      if (!columnsExist[0].age_exists) {
+        await sql`ALTER TABLE user_details ADD COLUMN age NUMERIC`
+        console.log("Added age column")
+      }
+
+      if (!columnsExist[0].sex_exists) {
+        await sql`ALTER TABLE user_details ADD COLUMN sex TEXT`
+        console.log("Added sex column")
+      }
+
+      console.log("Table already exists, checked/added new columns")
     }
 
     return { success: true }

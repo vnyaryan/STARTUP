@@ -92,7 +92,7 @@ export async function getUserDetails(email: string) {
     const sql = getSql()
 
     const users = await sql`
-      SELECT email_id, date_of_birth FROM user_details WHERE email_id = ${email}
+      SELECT email_id, date_of_birth, username, age, sex FROM user_details WHERE email_id = ${email}
     `
 
     if (users.length === 0) {
@@ -102,6 +102,9 @@ export async function getUserDetails(email: string) {
     return {
       email: users[0].email_id,
       dateOfBirth: users[0].date_of_birth,
+      username: users[0].username,
+      age: users[0].age,
+      sex: users[0].sex,
     }
   } catch (error) {
     console.error("Error getting user details:", error)

@@ -19,6 +19,9 @@ export default function ProfilePage() {
   const [userDetails, setUserDetails] = useState<{
     email: string
     dateOfBirth: string
+    username?: string
+    age?: number
+    sex?: string
   } | null>(null)
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
@@ -130,8 +133,27 @@ export default function ProfilePage() {
 
             <TabsContent value="details" className="space-y-4">
               <div className="space-y-2">
+                <h3 className="text-sm font-medium text-gray-500">Username</h3>
+                <p className="text-lg font-medium">{userDetails?.username || "Not provided"}</p>
+              </div>
+
+              <div className="space-y-2">
                 <h3 className="text-sm font-medium text-gray-500">Email Address</h3>
                 <p className="text-lg font-medium">{userDetails?.email}</p>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-gray-500">Age</h3>
+                <p className="text-lg font-medium">{userDetails?.age || "Not provided"}</p>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-gray-500">Sex</h3>
+                <p className="text-lg font-medium">
+                  {userDetails?.sex
+                    ? userDetails.sex.charAt(0).toUpperCase() + userDetails.sex.slice(1)
+                    : "Not provided"}
+                </p>
               </div>
 
               <div className="space-y-2">

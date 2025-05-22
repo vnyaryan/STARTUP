@@ -20,6 +20,9 @@ export async function signupUser(formData: FormData) {
     const day = formData.get("day") as string
     const month = formData.get("month") as string
     const year = formData.get("year") as string
+    const username = formData.get("username") as string
+    const age = formData.get("age") as string
+    const sex = formData.get("sex") as string
 
     console.log(`Signup attempt for email: ${email}`)
 
@@ -76,8 +79,8 @@ export async function signupUser(formData: FormData) {
       const sql = getSql()
 
       const insertResult = await sql`
-        INSERT INTO user_details (email_id, password, date_of_birth)
-        VALUES (${email}, ${hashedPassword}, ${dateOfBirth})
+        INSERT INTO user_details (email_id, password, date_of_birth, username, age, sex)
+        VALUES (${email}, ${hashedPassword}, ${dateOfBirth}, ${username}, ${age}, ${sex})
         RETURNING email_id
       `
 

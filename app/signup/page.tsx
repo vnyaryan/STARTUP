@@ -39,6 +39,9 @@ export default function SignupPage() {
   const [day, setDay] = useState("")
   const [month, setMonth] = useState("")
   const [year, setYear] = useState("")
+  const [username, setUsername] = useState("")
+  const [age, setAge] = useState("")
+  const [sex, setSex] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -96,6 +99,9 @@ export default function SignupPage() {
       formData.append("day", day)
       formData.append("month", month)
       formData.append("year", year)
+      formData.append("username", username)
+      formData.append("age", age)
+      formData.append("sex", sex)
 
       const result = await signupUser(formData)
 
@@ -248,6 +254,19 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="johndoe"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
@@ -271,6 +290,36 @@ export default function SignupPage() {
                   <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
                 </Button>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="age">Age</Label>
+              <Input
+                id="age"
+                type="number"
+                placeholder="25"
+                min="1"
+                max="120"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sex">Sex</Label>
+              <Select value={sex} onValueChange={setSex} required disabled={isLoading}>
+                <SelectTrigger id="sex">
+                  <SelectValue placeholder="Select sex" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -335,7 +384,7 @@ export default function SignupPage() {
       {showSuccess && (
         <SuccessMessage
           title="Account Created Successfully!"
-          message={`Welcome to our platform, ${email}! Your account has been created and stored in our database. You can now log in with your credentials.`}
+          message={`Welcome to our platform, ${username || email}! Your account has been created and stored in our database. You can now log in with your credentials.`}
           onClose={handleContinue}
         />
       )}
