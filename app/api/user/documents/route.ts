@@ -85,16 +85,54 @@ export async function GET() {
       }
     }
 
-    // Format the document names for display (convert snake_case to title case)
-    const formattedData = Object.entries(documentData).map(([key, status]) => {
-      // Convert snake_case to title case (e.g., "aadhaard_card" to "Aadhaard Card")
-      const formattedName = key
+    // Enhanced formatting function for document names
+    function formatDocumentName(key: string): string {
+      // Convert snake_case to title case
+      let formattedName = key
         .split("_")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ")
-        .replace("Aadhaard", "AADHAAR") // Special case for AADHAAR
-        .replace("Pan", "PAN") // Special case for PAN
-        .replace("Passport", "PASSPORT") // Special case for PASSPORT
+
+      // Define capitalization rules for specific terms
+      const capitalizationRules = {
+        Aadhaar: "AADHAAR",
+        Aadhaard: "AADHAAR", // Handle typo variations
+        Pan: "PAN",
+        Passport: "PASSPORT",
+        Email: "EMAIL",
+        Id: "ID",
+        Kyc: "KYC",
+        Otp: "OTP",
+        Api: "API",
+        Url: "URL",
+        Pdf: "PDF",
+        Jpg: "JPG",
+        Png: "PNG",
+        Gif: "GIF",
+        Html: "HTML",
+        Css: "CSS",
+        Js: "JS",
+        Json: "JSON",
+        Xml: "XML",
+        Sql: "SQL",
+        Db: "DB",
+        Ui: "UI",
+        Ux: "UX",
+      }
+
+      // Apply capitalization rules
+      Object.entries(capitalizationRules).forEach(([original, replacement]) => {
+        // Use word boundaries to ensure we only replace complete words
+        const regex = new RegExp(`\\b${original}\\b`, "gi")
+        formattedName = formattedName.replace(regex, replacement)
+      })
+
+      return formattedName
+    }
+
+    // Format the document names for display (convert snake_case to title case)
+    const formattedData = Object.entries(documentData).map(([key, status]) => {
+      const formattedName = formatDocumentName(key)
 
       return {
         name: formattedName,
